@@ -25,7 +25,7 @@ services:
       dockerfile: Dockerfile
     container_name: umwelt_dashboard
     ports:
-      - "8051:8050"
+      - "8050:8050"
     environment:
       DB_USER: gruppeeins
       DB_PASSWORD: mypassword
