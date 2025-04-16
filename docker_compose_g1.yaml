@@ -22,7 +22,7 @@ services:
   app:
     build:
       context: ./src
-      dockerfile: ../Dockerfile
+      dockerfile: Dockerfile
     container_name: umwelt_dashboard
     ports:
       - "8051:8050"
