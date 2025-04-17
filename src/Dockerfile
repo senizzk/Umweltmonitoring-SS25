@@ -1,17 +1,22 @@
-# Use the official Python image as the base image
+# Verwende ein offizielles Python-Laufzeit-Image als Basis
 FROM python:3.10-slim
 
-# Set the working directory in the container
+# Setze das Arbeitsverzeichnis im Container
 WORKDIR /app
 
-# Copy the current directory contents into the container
-COPY . /app
+# Kopiere die requirements.txt-Datei in das Arbeitsverzeichnis
+COPY requirements.txt .
 
-# Install any required Python packages
-RUN pip install --no-cache-dir -r requirements.txt
+# Installiere alle benötigten Python-Pakete aus der requirements.txt
+# --no-cache-dir: reduziert die Image-Größe
+# --trusted-host: vermeidet SSL-Probleme in bestimmten Netzwerken
+RUN pip install --no-cache-dir --trusted-host pypi.python.org -r requirements.txt
 
-# Expose the port the app runs on
-EXPOSE 5000
+# Kopiere den restlichen Code (z. B. main_app.py, sensor_utils.py) in den Container
+COPY . .
 
-# Define the command to run the application
-CMD ["python", "app.py"]
+# Öffne Port 8050 für den Zugriff von außen
+EXPOSE 8050
+
+# Starte die Anwendung beim Hochfahren des Containers
+CMD ["python", "main_app.py"]
