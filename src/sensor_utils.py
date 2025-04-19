@@ -11,7 +11,7 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "umwelt_db")
 
 # SenseBox-ID (von OpenSenseMap)
-SENSEBOX_ID = os.getenv("SENSEBOX_ID", "6039fe0f2c4a41001be3726e")
+SENSEBOX_ID = os.getenv("SENSEBOX_ID", "67a661af4ef45d0008682744")
 
 # Verbindung zur TimescaleDB aufbauen
 db_url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"

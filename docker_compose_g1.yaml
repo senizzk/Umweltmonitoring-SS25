@@ -32,7 +32,7 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: umwelt_db
-      SENSEBOX_ID: "6252afcfd7e732001bb6b9f7"
+      SENSEBOX_ID: "67a661af4ef45d0008682744"
     depends_on:
       db:
         condition: service_healthy
