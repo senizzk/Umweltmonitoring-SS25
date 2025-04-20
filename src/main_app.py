@@ -52,16 +52,18 @@ app.layout = html.Div([
 
         # 📦 Zusatzbox (z. B. für Grafiken, Vorhersagen, weitere Sensoren)
         html.Div(id="extra-box",
-                 children="Hier könnten weitere Inhalte stehen...",
+                 children=[
+                    "Hier könnten weitere Inhalte stehen..."
+                    ],
                  style={
                      "width": "1120px",
                      "height": "420px",
                      "padding": "20px 30px",
                      "marginLeft": "30px",
                      "borderRadius": "40px",
-                     "background": "linear-gradient(135deg, rgba(18, 18, 89, 0.3), rgba(75, 0, 130, 0.3), rgba(138, 43, 226, 0.3), rgba(135,206,250, 0.3))",
                      "color": "white",
                      "display": "flex",
+                     "background": "linear-gradient(135deg, rgba(18, 18, 89, 0.2), rgba(75, 0, 130, 0.2), rgba(138, 43, 226, 0.2), rgba(135,206,250, 0.2))",
                      "alignItems": "center",
                      "justifyContent": "center",
                      "fontSize": "24px",
