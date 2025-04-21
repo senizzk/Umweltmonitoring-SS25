@@ -160,49 +160,77 @@ app.layout = html.Div([
 
             # Alttaki 3 küçük kutu
             html.Div([
-                html.Div("Extra 1", style={
+                html.Div([
+                    html.Div("Humidity", style={
+                        "position": "absolute",
+                        "top": "15px",
+                        "left": "15px",
+                        "fontSize": "16px",
+                        "fontWeight": "600",
+                        "color": "#000"
+                    }),
+                    html.Div("...", style={ "zIndex": "1" })
+                ], style={
                     "width": "350px",
                     "height": "120px",
-                    "marginRight": "40px",
                     "borderRadius": "20px",
                     "backgroundColor": "#ECF0F3",
                     "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                    "position": "relative",
                     "display": "flex",
                     "alignItems": "center",
-                    "justifyContent": "center",
-                    "fontSize": "16px",
-                    "color": "white"
+                    "justifyContent": "center"
                 }),
-                html.Div("Extra 2", style={
+
+                html.Div([
+                    html.Div("Luminance", style={
+                        "position": "absolute",
+                        "top": "15px",
+                        "left": "15px",
+                        "fontSize": "16px",
+                        "fontWeight": "600",
+                        "color": "#000"
+                    }),
+                    html.Div("...", style={ "zIndex": "1" })
+                ], style={
                     "width": "350px",
                     "height": "120px",
-                    "marginRight": "40px",
                     "borderRadius": "20px",
                     "backgroundColor": "#ECF0F3",
                     "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                    "position": "relative",
                     "display": "flex",
                     "alignItems": "center",
-                    "justifyContent": "center",
-                    "fontSize": "16px",
-                    "color": "white"
+                    "justifyContent": "center"
                 }),
-                html.Div("Extra 3", style={
+
+                html.Div([
+                    html.Div("Air quality", style={
+                        "position": "absolute",
+                        "top": "15px",
+                        "left": "15px",
+                        "fontSize": "16px",
+                        "fontWeight": "600",
+                        "color": "#000"
+                    }),
+                    html.Div("...", style={ "zIndex": "1" })
+                ], style={
                     "width": "350px",
                     "height": "120px",
                     "borderRadius": "20px",
                     "backgroundColor": "#ECF0F3",
                     "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                    "position": "relative",
                     "display": "flex",
                     "alignItems": "center",
-                    "justifyContent": "center",
-                    "fontSize": "16px",
-                    "color": "white"
+                    "justifyContent": "center"
                 })
             ], style={
                 "display": "flex",
                 "flexDirection": "row",
                 "justifyContent": "center",
-                "alignItems": "center"
+                "alignItems": "center",
+                "gap": "40px"
             })
         ], style={
             "display": "flex",
