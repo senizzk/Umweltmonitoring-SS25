@@ -59,11 +59,11 @@ app.layout = html.Div([
         # Temperatur-Box
         html.Div(id="temp-wert", style={
             "width": "320px",
-            "height": "420px",
+            "height": "320px",
             "padding": "20px 30px",
             "borderRadius": "30px",
-            "backgroundColor": "#121212",
-            "boxShadow": "12px 12px 24px #050505, -12px -12px 24px #1c1c1c",
+            "backgroundColor": "#ECF0F3",
+            "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
             "display": "flex",
             "flexDirection": "column",
             "alignItems": "center",
@@ -73,61 +73,153 @@ app.layout = html.Div([
         }),
 
         # Extra-Box mit Sensor-Anzeigen
+        # Extra-Box mit Sensor-Anzeigen (üstte 3 büyük, altta 3 küçük Box)
         html.Div([
-            html.Div(id="sensor1-box", style={
-                "width": "320px",
-                "height": "400px",
-                "marginRight": "40px",
-                "borderRadius": "20px",
-                "backgroundColor": "#121212",
-                "boxShadow": "8px 8px 16px #050505, -8px -8px 16px #1c1c1c",
+            # Üstteki 3 büyük kutu
+            html.Div([
+                html.Div([
+                    html.Div("Rain (hourly)", style={
+                        "position": "absolute",
+                        "top": "15px",
+                        "left": "15px",
+                        "fontSize": "16px",
+                        "fontWeight": "600",
+                        "color": "#000"
+                    }),
+                    html.Div("...", style={
+                        "zIndex": "1"
+                    })
+                ], style={
+                    "width": "350px",
+                    "height": "280px",
+                    #"marginRight": "40px",
+                    "borderRadius": "20px",
+                    "backgroundColor": "#ECF0F3",
+                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                    "position": "relative",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center"
+                }),
+                html.Div([
+                    html.Div("Wind Status", style={
+                        "position": "absolute",
+                        "top": "15px",
+                        "left": "15px",
+                        "fontSize": "16px",
+                        "fontWeight": "600",
+                        "color": "#000"
+                    }),
+                    html.Div("...", style={
+                        "zIndex": "1"
+                    })
+                ], style={
+                    "width": "350px",
+                    "height": "280px",
+                    #"marginRight": "40px",
+                    "borderRadius": "20px",
+                    "backgroundColor": "#ECF0F3",
+                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                    "position": "relative",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center"
+                }),
+                html.Div([
+                    html.Div("Pressure", style={
+                        "position": "absolute",
+                        "top": "15px",
+                        "left": "15px",
+                        "fontSize": "16px",
+                        "fontWeight": "600",
+                        "color": "#000"
+                    }),
+                    html.Div("...", style={
+                        "zIndex": "1"
+                    })
+                ], style={
+                    "width": "350px",
+                    "height": "280px",
+                    #"marginRight": "40px",
+                    "borderRadius": "20px",
+                    "backgroundColor": "#ECF0F3",
+                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                    "position": "relative",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center"
+                })
+            ], style={
                 "display": "flex",
-                "alignItems": "center",
+                "flexDirection": "row",
                 "justifyContent": "center",
-                "fontSize": "18px",
-                "color": "white"
+                "alignItems": "center",
+                "marginBottom": "30px",
+                "gap": "40px", 
             }),
-            html.Div("Sensor 2", style={
-                "width": "320px",
-                "height": "400px",
-                "marginRight": "40px",
-                "borderRadius": "20px",
-                "backgroundColor": "#121212",
-                "boxShadow": "8px 8px 16px #050505, -8px -8px 16px #1c1c1c",
+
+            # Alttaki 3 küçük kutu
+            html.Div([
+                html.Div("Extra 1", style={
+                    "width": "350px",
+                    "height": "120px",
+                    "marginRight": "40px",
+                    "borderRadius": "20px",
+                    "backgroundColor": "#ECF0F3",
+                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center",
+                    "fontSize": "16px",
+                    "color": "white"
+                }),
+                html.Div("Extra 2", style={
+                    "width": "350px",
+                    "height": "120px",
+                    "marginRight": "40px",
+                    "borderRadius": "20px",
+                    "backgroundColor": "#ECF0F3",
+                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center",
+                    "fontSize": "16px",
+                    "color": "white"
+                }),
+                html.Div("Extra 3", style={
+                    "width": "350px",
+                    "height": "120px",
+                    "borderRadius": "20px",
+                    "backgroundColor": "#ECF0F3",
+                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center",
+                    "fontSize": "16px",
+                    "color": "white"
+                })
+            ], style={
                 "display": "flex",
-                "alignItems": "center",
+                "flexDirection": "row",
                 "justifyContent": "center",
-                "fontSize": "18px",
-                "color": "white"
-            }),
-            html.Div("Sensor 3", style={
-                "width": "320px",
-                "height": "400px",
-                "borderRadius": "20px",
-                "backgroundColor": "#121212",
-                "boxShadow": "8px 8px 16px #050505, -8px -8px 16px #1c1c1c",
-                "display": "flex",
-                "alignItems": "center",
-                "justifyContent": "center",
-                "fontSize": "18px",
-                "color": "white"
+                "alignItems": "center"
             })
         ], style={
             "display": "flex",
-            "flexDirection": "row",
-            "justifyContent": "center",
+            "flexDirection": "column",
+            "justifyContent": "space-between",
             "alignItems": "center",
-            "width": "1120px",
-            "height": "420px",
-            "marginLeft": "30px",
+            "width": "1150px",
             "padding": "30px",
             "borderRadius": "30px",
-            "backgroundColor": "#0e0e0e",
-            "boxShadow": "inset 8px 8px 16px #070707, inset -8px -8px 16px #1a1a1a",
+            "backgroundColor": "#ECF0F3",
+            "boxShadow": "inset 8px 8px 16px #d1d9e6, inset -8px -8px 16px #ffffff",
             "color": "white",
             "position": "relative",
-            "overflow": "hidden"
+            "overflow": "hidden",
+            "marginLeft": "40px"
         })
+
     ], style={
         "display": "flex",
         "flexDirection": "row",
@@ -150,7 +242,7 @@ app.layout = html.Div([
     })
 ], style={
     "fontFamily": "'Montserrat', sans-serif",
-    "backgroundColor": "#000000",
+    "backgroundColor": "#ECF0F3",
     "height": "100vh",
     "width": "100vw",
     "margin": "0",
