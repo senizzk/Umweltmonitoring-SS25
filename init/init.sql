@@ -5,6 +5,7 @@ CREATE EXTENSION IF NOT EXISTS timescaledb;
 CREATE TABLE IF NOT EXISTS sensor_daten (
     zeitstempel TIMESTAMPTZ NOT NULL,     -- Zeitpunkt der Messung
     box_id TEXT NOT NULL,                 -- ID der SenseBox
+    sensor_name TEXT NOT NULL,            -- Name der SenseBox
     sensor_id TEXT NOT NULL,              -- ID des Sensors
     messwert DOUBLE PRECISION,            -- Gemessener Wert
     einheit TEXT,                         -- Einheit des Werts (z.B. °C, µg/m³)

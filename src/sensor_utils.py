@@ -26,6 +26,7 @@ def daten_von_api_holen(box_id=SENSEBOX_ID):
     response.raise_for_status()
     inhalt = response.json()
 
+    box_name = inhalt.get("name", "Unbekannt")
     sensoren = inhalt.get("sensors", [])
     if not sensoren:
         print("⚠️ Keine Sensoren gefunden.")
@@ -46,15 +47,16 @@ def daten_von_api_holen(box_id=SENSEBOX_ID):
         'icon'
     ]].rename(columns={
         '_id': 'sensor_id',
+        'name': 'sensor_name',
         'unit': 'einheit',
         'sensorType': 'sensor_typ'
     })
 
     df_umgewandelt.dropna(subset=['zeitstempel', 'messwert'], inplace=True)
 
-    return df_umgewandelt
+    return df_umgewandelt, box_name
 
-def daten_in_datenbank_schreiben(df, box_id=SENSEBOX_ID):
+def daten_in_datenbank_schreiben(df, box_id=SENSEBOX_ID, box_name="Unbekannt"):
     """
     Schreibt die verarbeiteten Sensordaten in die Datenbank (vermeidet Duplikate).
     """
@@ -76,6 +78,7 @@ def daten_in_datenbank_schreiben(df, box_id=SENSEBOX_ID):
             """), {
                 "zeitstempel": zeile["zeitstempel"],
                 "box_id": box_id,
+                "sensor_name": box_name,
                 "sensor_id": zeile["sensor_id"],
                 "messwert": zeile["messwert"],
                 "einheit": zeile["einheit"],

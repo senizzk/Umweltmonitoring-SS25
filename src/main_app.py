@@ -59,7 +59,7 @@ app.layout = html.Div([
         # Temperatur-Box
         html.Div(id="temp-wert", style={
             "width": "320px",
-            "height": "320px",
+            "height": "300px",
             "padding": "20px 30px",
             "borderRadius": "30px",
             "backgroundColor": "#ECF0F3",
@@ -284,8 +284,8 @@ app.layout = html.Div([
     Input("auto-update", "n_intervals")
 )
 def aktualisiere_daten(n_intervals):
-    df = daten_von_api_holen(BOX_ID)
-    daten_in_datenbank_schreiben(df, BOX_ID)
+    df, box_name = daten_von_api_holen(BOX_ID)
+    daten_in_datenbank_schreiben(df, BOX_ID, box_name)
 
     if df is None or df.empty:
         return html.Div("⚠️ Keine Daten gefunden.", style={"color": "white"})
@@ -297,36 +297,45 @@ def aktualisiere_daten(n_intervals):
     letzter_wert = temp_df.sort_values("zeitstempel").iloc[-1]["messwert"]
     zeit = temp_df.sort_values("zeitstempel").iloc[-1]["zeitstempel"]
     zeit_dt = pd.to_datetime(zeit).astimezone(ZoneInfo("Europe/Berlin"))
-    zeit_string = zeit_dt.strftime("Stand: %d.%m.%Y – %H:%M")
+    zeit_string = zeit_dt.strftime("%d.%m.%Y – %H:%M")
     wert_text = f"{round(letzter_wert)} °C"
 
-    return [
-        html.Div(wert_text, style={
-            "fontSize": "50px",
+    return html.Div([
+        html.Div(box_name, style={
+            "position": "absolute",
+            "top": "10px",
+            "left": "15px",
+            "fontSize": "40px",
             "fontWeight": "bold",
-            "color": "white"
-        }),
-        html.Hr(style={
-            "width": "80%",
-            "borderColor": "white",
-            "borderWidth": "1px",
-            "marginTop": "10px"
+            "color": "#333"
         }),
         html.Div(zeit_string, style={
+            "position": "absolute",
+            "top": "60px",
+            "left": "15px",
             "fontSize": "14px",
-            "color": "#aaa",
-            "marginTop": "10px",
-            "fontStyle": "italic"
-        })
-    ]
+            "color": "#666"
+        }),
+        html.Div(wert_text, style={
+            "position": "absolute",
+            "bottom": "20px",
+            "left": "20px",
+            "fontSize": "50px",
+            "fontWeight": "600",
+            "color": "#222"
+        }),    
+        html.Img(src="/assets/weather.png", style={
+        "position": "absolute",
+        "bottom": "100px",
+        "left": "20px",
+        "width": "100px"
+    })
+    ], style={
+        "width": "100%",
+        "height": "100%",
+        "position": "relative"
+    })
 
-# Windbox leeren
-@app.callback(
-    Output("sensor1-box", "children"),
-    Input("auto-update", "n_intervals")
-)
-def leere_windbox(n):
-    return ""
 
 # Countdown-Callback
 @app.callback(
