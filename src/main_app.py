@@ -169,7 +169,15 @@ app.layout = html.Div([
                         "fontWeight": "600",
                         "color": "#000"
                     }),
-                    html.Div("...", style={ "zIndex": "1" })
+                    html.Div(id="humidity-box", style={
+                        "zIndex": "1",
+                        "display": "flex",
+                        "flexDirection": "row",
+                        "alignItems": "center",
+                        "justifyContent": "space-between",
+                        "width": "100%",
+                        "padding": "0 15px"
+                    })
                 ], style={
                     "width": "350px",
                     "height": "120px",
@@ -335,6 +343,38 @@ def aktualisiere_daten(n_intervals):
         "height": "100%",
         "position": "relative"
     })
+
+@app.callback(
+    Output("humidity-box", "children"),
+    Input("auto-update", "n_intervals")
+)
+def aktualisiere_humidity(n_intervals):
+    df, _ = daten_von_api_holen(BOX_ID)
+
+    if df is None or df.empty:
+        return html.Div("⚠️ Keine Daten.")
+
+    humidity_df = df[df["einheit"] == "%"]
+    if humidity_df.empty:
+        return html.Div("⚠️ Kein Humidity-Daten.")
+
+    letzter_wert = humidity_df.sort_values("zeitstempel").iloc[-1]["messwert"]
+    wert_text = f"{round(letzter_wert)} %"
+
+    return html.Div([
+        html.Div(wert_text, style={
+            "fontSize": "32px",
+            "fontWeight": "bold",
+            "color": "#333"
+        }),
+        html.Img(src="/assets/humidity.png", style={
+            "position": "absolute",
+            "right": "20px",
+            "height": "60px",
+            "bottom": "30px",
+        })
+    ])
+
 
 
 # Countdown-Callback
