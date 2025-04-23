@@ -50,225 +50,219 @@ def wind_figure(direction_deg, speed):
     )
     return fig
 
-# Layout
 app.layout = html.Div([
-    dcc.Interval(id="auto-update", interval=UPDATE_INTERVAL_SEKUNDEN * 1000, n_intervals=0),
-    dcc.Interval(id="countdown-timer", interval=1000, n_intervals=0),
+    # Wrapper für Zoom-Effekt (wird in style.css skaliert)
+    html.Div(id="zoom-wrapper", children=[
 
-    html.Div([
-        # Temperatur-Box
-        html.Div(id="temp-wert", style={
-            "width": "320px",
-            "height": "300px",
-            "padding": "20px 30px",
-            "borderRadius": "30px",
-            "backgroundColor": "#ECF0F3",
-            "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
-            "display": "flex",
-            "flexDirection": "column",
-            "alignItems": "center",
-            "justifyContent": "center",
-            "textAlign": "center",
-            "zIndex": "1"
-        }),
+        # Intervall-Komponenten für automatische Updates
+        dcc.Interval(id="auto-update", interval=UPDATE_INTERVAL_SEKUNDEN * 1000, n_intervals=0),
+        dcc.Interval(id="countdown-timer", interval=1000, n_intervals=0),
 
-        # Extra-Box mit Sensor-Anzeigen
-        # Extra-Box mit Sensor-Anzeigen (üstte 3 büyük, altta 3 küçük Box)
+        # Hauptlayout: Temperatur-Box + ExtraBox
         html.Div([
-            # Üstteki 3 büyük kutu
-            html.Div([
-                html.Div([
-                    html.Div("Rain (hourly)", style={
-                        "position": "absolute",
-                        "top": "15px",
-                        "left": "15px",
-                        "fontSize": "16px",
-                        "fontWeight": "600",
-                        "color": "#000"
-                    }),
-                    html.Div("...", style={
-                        "zIndex": "1"
-                    })
-                ], style={
-                    "width": "350px",
-                    "height": "280px",
-                    #"marginRight": "40px",
-                    "borderRadius": "20px",
-                    "backgroundColor": "#ECF0F3",
-                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
-                    "position": "relative",
-                    "display": "flex",
-                    "alignItems": "center",
-                    "justifyContent": "center"
-                }),
-                html.Div([
-                    html.Div("Wind Status", style={
-                        "position": "absolute",
-                        "top": "15px",
-                        "left": "15px",
-                        "fontSize": "16px",
-                        "fontWeight": "600",
-                        "color": "#000"
-                    }),
-                    html.Div("...", style={
-                        "zIndex": "1"
-                    })
-                ], style={
-                    "width": "350px",
-                    "height": "280px",
-                    #"marginRight": "40px",
-                    "borderRadius": "20px",
-                    "backgroundColor": "#ECF0F3",
-                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
-                    "position": "relative",
-                    "display": "flex",
-                    "alignItems": "center",
-                    "justifyContent": "center"
-                }),
-                html.Div([
-                    html.Div("Pressure", style={
-                        "position": "absolute",
-                        "top": "15px",
-                        "left": "15px",
-                        "fontSize": "16px",
-                        "fontWeight": "600",
-                        "color": "#000"
-                    }),
-                    html.Div("...", style={
-                        "zIndex": "1"
-                    })
-                ], style={
-                    "width": "350px",
-                    "height": "280px",
-                    #"marginRight": "40px",
-                    "borderRadius": "20px",
-                    "backgroundColor": "#ECF0F3",
-                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
-                    "position": "relative",
-                    "display": "flex",
-                    "alignItems": "center",
-                    "justifyContent": "center"
-                })
-            ], style={
+            # Temperatur-Box
+            html.Div(id="temp-wert", style={
+                "width": "clamp(280px, 26vw, 320px)",
+                "height": "clamp(240px, 25vw, 300px)",
+                "padding": "20px 30px",
+                "borderRadius": "30px",
+                "backgroundColor": "#ECF0F3",
+                "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
                 "display": "flex",
-                "flexDirection": "row",
-                "justifyContent": "center",
+                "flexDirection": "column",
                 "alignItems": "center",
-                "marginBottom": "30px",
-                "gap": "40px", 
+                "justifyContent": "center",
+                "textAlign": "center",
+                "zIndex": "1"
             }),
 
-            # Alttaki 3 küçük kutu
+            # Extra-Box mit Sensor-Anzeigen
             html.Div([
+                # Obere 3 große Boxen
                 html.Div([
-                    html.Div("Humidity", style={
-                        "position": "absolute",
-                        "top": "15px",
-                        "left": "15px",
-                        "fontSize": "16px",
-                        "fontWeight": "600",
-                        "color": "#000"
-                    }),
-                    html.Div(id="humidity-box", style={
-                        "zIndex": "1",
+                    html.Div([
+                        html.Div("Rain (hourly)", style={
+                            "position": "absolute",
+                            "top": "15px",
+                            "left": "15px",
+                            "fontSize": "16px",
+                            "fontWeight": "600",
+                            "color": "#000"
+                        }),
+                        html.Div("...", style={ "zIndex": "1" })
+                    ], style={
+                        "width": "clamp(300px, 30vw, 350px)",
+                        "height": "clamp(240px, 25vw, 280px)",
+                        "borderRadius": "20px",
+                        "backgroundColor": "#ECF0F3",
+                        "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                        "position": "relative",
                         "display": "flex",
-                        "flexDirection": "row",
                         "alignItems": "center",
-                        "justifyContent": "space-between",
-                        "width": "100%",
-                        "padding": "0 15px"
+                        "justifyContent": "center"
+                    }),
+                    html.Div([
+                        html.Div("Wind Status", style={
+                            "position": "absolute",
+                            "top": "15px",
+                            "left": "15px",
+                            "fontSize": "16px",
+                            "fontWeight": "600",
+                            "color": "#000"
+                        }),
+                        html.Div("...", style={ "zIndex": "1" })
+                    ], style={
+                        "width": "clamp(300px, 30vw, 350px)",
+                        "height": "clamp(240px, 25vw, 280px)",
+                        "borderRadius": "20px",
+                        "backgroundColor": "#ECF0F3",
+                        "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                        "position": "relative",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center"
+                    }),
+                    html.Div([
+                        html.Div("Pressure", style={
+                            "position": "absolute",
+                            "top": "15px",
+                            "left": "15px",
+                            "fontSize": "16px",
+                            "fontWeight": "600",
+                            "color": "#000"
+                        }),
+                        html.Div("...", style={ "zIndex": "1" })
+                    ], style={
+                        "width": "clamp(300px, 30vw, 350px)",
+                        "height": "clamp(240px, 25vw, 280px)",
+                        "borderRadius": "20px",
+                        "backgroundColor": "#ECF0F3",
+                        "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                        "position": "relative",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center"
                     })
                 ], style={
-                    "width": "350px",
-                    "height": "120px",
-                    "borderRadius": "20px",
-                    "backgroundColor": "#ECF0F3",
-                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
-                    "position": "relative",
                     "display": "flex",
+                    "flexDirection": "row",
+                    "justifyContent": "center",
                     "alignItems": "center",
-                    "justifyContent": "center"
+                    "marginBottom": "30px",
+                    "gap": "40px"
                 }),
 
+                # Untere 3 kleine Boxen
                 html.Div([
-                    html.Div("Luminance", style={
-                        "position": "absolute",
-                        "top": "15px",
-                        "left": "15px",
-                        "fontSize": "16px",
-                        "fontWeight": "600",
-                        "color": "#000"
+                    html.Div([
+                        html.Div("Humidity", style={
+                            "position": "absolute",
+                            "top": "15px",
+                            "left": "15px",
+                            "fontSize": "16px",
+                            "fontWeight": "600",
+                            "color": "#000"
+                        }),
+                        html.Div(id="humidity-box", style={
+                            "zIndex": "1",
+                            "display": "flex",
+                            "flexDirection": "row",
+                            "alignItems": "center",
+                            "justifyContent": "space-between",
+                            "width": "100%",
+                            "padding": "0 15px"
+                        })
+                    ], style={
+                        "width": "clamp(200px, 28vw, 350px)",
+                        "height": "clamp(100px, 12vw, 120px)",
+                        "borderRadius": "20px",
+                        "backgroundColor": "#ECF0F3",
+                        "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                        "position": "relative",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center"
                     }),
-                    html.Div("...", style={ "zIndex": "1" })
-                ], style={
-                    "width": "350px",
-                    "height": "120px",
-                    "borderRadius": "20px",
-                    "backgroundColor": "#ECF0F3",
-                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
-                    "position": "relative",
-                    "display": "flex",
-                    "alignItems": "center",
-                    "justifyContent": "center"
-                }),
-
-                html.Div([
-                    html.Div("Air quality", style={
-                        "position": "absolute",
-                        "top": "15px",
-                        "left": "15px",
-                        "fontSize": "16px",
-                        "fontWeight": "600",
-                        "color": "#000"
+                    html.Div([
+                        html.Div("Luminance", style={
+                            "position": "absolute",
+                            "top": "15px",
+                            "left": "15px",
+                            "fontSize": "16px",
+                            "fontWeight": "600",
+                            "color": "#000"
+                        }),
+                        html.Div("...", style={ "zIndex": "1" })
+                    ], style={
+                        "width": "clamp(200px, 28vw, 350px)",
+                        "height": "clamp(100px, 12vw, 120px)",
+                        "borderRadius": "20px",
+                        "backgroundColor": "#ECF0F3",
+                        "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                        "position": "relative",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center"
                     }),
-                    html.Div("...", style={ "zIndex": "1" })
+                    html.Div([
+                        html.Div("Air quality", style={
+                            "position": "absolute",
+                            "top": "15px",
+                            "left": "15px",
+                            "fontSize": "16px",
+                            "fontWeight": "600",
+                            "color": "#000"
+                        }),
+                        html.Div("...", style={ "zIndex": "1" })
+                    ], style={
+                        "width": "clamp(200px, 28vw, 350px)",
+                        "height": "clamp(100px, 12vw, 120px)",
+                        "borderRadius": "20px",
+                        "backgroundColor": "#ECF0F3",
+                        "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
+                        "position": "relative",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center"
+                    })
                 ], style={
-                    "width": "350px",
-                    "height": "120px",
-                    "borderRadius": "20px",
-                    "backgroundColor": "#ECF0F3",
-                    "boxShadow": "12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff",
-                    "position": "relative",
                     "display": "flex",
+                    "flexDirection": "row",
+                    "justifyContent": "center",
                     "alignItems": "center",
-                    "justifyContent": "center"
+                    "gap": "40px"
                 })
             ], style={
                 "display": "flex",
-                "flexDirection": "row",
-                "justifyContent": "center",
+                "flexDirection": "column",
+                "justifyContent": "space-between",
                 "alignItems": "center",
-                "gap": "40px"
+                "padding": "30px",
+                "borderRadius": "30px",
+                "backgroundColor": "#ECF0F3",
+                "boxShadow": "inset 8px 8px 16px #d1d9e6, inset -8px -8px 16px #ffffff",
+                "color": "white",
+                "position": "relative",
+                "overflow": "hidden",
+                "maxWidth": "1200px",
+                "width": "100%",
+                "boxSizing": "border-box"
             })
+
         ], style={
             "display": "flex",
-            "flexDirection": "column",
-            "justifyContent": "space-between",
-            "alignItems": "center",
-            "padding": "30px",
-            "borderRadius": "30px",
-            "backgroundColor": "#ECF0F3",
-            "boxShadow": "inset 8px 8px 16px #d1d9e6, inset -8px -8px 16px #ffffff",
-            "color": "white",
-            "position": "relative",
-            "overflow": "hidden",
-            "maxWidth": "1200px",         # ✅ genişliği sınırla ama esnek bırak
-            "width": "100%",              # ✅ tam ekran genişliği kullan
-            "boxSizing": "border-box",    # ✅ padding taşma yapmasın
-            "padding": "30px"
-        })
+            "flexDirection": "row",
+            "alignItems": "flex-start",
+            "justifyContent": "center",
+            "gap": "40px",
+            "marginTop": "50px",
+            "width": "100%",
+            "flexWrap": "nowrap"
+        }),
 
-    ], style={
-        "display": "flex",
-        "flexDirection": "row",
-        "flexWrap": "wrap",  # <-- kutular alt satıra geçebilir
-        "justifyContent": "center",  # <-- her şeyi ortala
-        "alignItems": "flex-start",
-        "gap": "40px",               # <-- kutular arası boşluk
-        "marginTop": "50px",
-        "width": "100%"              # <-- sabit margin yerine tam genişlik
-    }),
+    ]),
 
+    # Countdown außerhalb vom Zoom
     html.Div(id="countdown", style={
         "position": "fixed",
         "bottom": "20px",
@@ -290,6 +284,8 @@ app.layout = html.Div([
     "padding": "0",
     "overflow": "hidden"
 })
+
+
 
 # Temperatur-Callback
 @app.callback(
