@@ -7,6 +7,8 @@ from sensor_utils import daten_von_api_holen, daten_in_datenbank_schreiben
 import os
 from sqlalchemy import create_engine
 from zoneinfo import ZoneInfo
+from dash_iconify import DashIconify
+import plotly.express as px
 
 # Verbindung zur Datenbank
 DB_URL = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
@@ -53,26 +55,71 @@ def wind_figure(direction_deg, speed):
     return fig
 
 # Layout
+
+def sensor_card(icon, label, id, unit, color="#007bff"):
+    return dbc.Card(
+        dbc.CardBody([
+            html.Div([
+                DashIconify(icon=icon, width=28, color=color, className="me-2"),
+                html.Span(label, className="fs-5 fw-semibold"),  #fs-5 für größere Schriftgröße, fw-semibold für fetten Text
+            ], className="d-flex align-items-center mb-3"),
+
+            html.Div([
+                html.Span(id=id, className="fs-1 fw-bold me-2"),
+                html.Span(unit, className="fs-2 text-muted")
+            ], className="d-flex align-items-end")
+        ]),
+        class_name="shadow-sm rounded bg-light"
+    )
+
+
+def temperaturverlauf_karte(dataframe):
+    fig = px.line(dataframe, x="Zeit", y="Temperatur", title=None, markers=True)
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+        height=250,
+        plot_bgcolor="#f8f9fa",
+        paper_bgcolor="#f8f9fa",
+        font=dict(color="#343a40"),
+        xaxis=dict(showgrid=False),
+        yaxis=dict(showgrid=True, gridcolor="#dee2e6")
+    )
+
+    return dbc.Card(
+        dbc.CardBody([
+            html.Div([
+                DashIconify(icon="mdi:chart-line", width=28, className="me-2", color="#6f42c1"),
+                html.Span("Temperaturverlauf", className="fs-5 fw-semibold"),
+            ], className="d-flex align-items-center mb-3"),
+            dcc.Graph(figure=fig, config={"displayModeBar": False})
+        ]),
+        class_name="shadow-sm rounded bg-light"
+    )
+
+
+
 app.layout = dbc.Container([
+    html.H4("Wetter Dashboard", className="mb-4"),
+
     dbc.Row([
-        dbc.Col(
-            html.Div(id="temp-wert", style={"color": "black"}),md=4, xl=4, style=
-            {"backgroundColor": "aquamarine", "padding": "10px", "borderRadius": "8px", "textAlign": "center"}),
-        dbc.Col(
-            html.Div("SensorBox1",id="sensor1-box", style={"color": "blue"}),md=4, xl=4),
-            ]), 
+        dbc.Col(sensor_card("mdi:thermometer", "Temperatur", "temp-wert", "°C", "#dc3545"), md=4),
+        dbc.Col(sensor_card("mdi:weather-windy", "Wind", "wind-wert", "km/h", "#0d6efd"), md=4),
+        dbc.Col(sensor_card("mdi:weather-rainy", "Regen", "regen-wert", "mm", "#198754"), md=4),
+    ], class_name="gx-4 gy-4"),
+
     dcc.Interval(id="auto-update", interval=UPDATE_INTERVAL_SEKUNDEN * 1000, n_intervals=0),
     dcc.Interval(id="countdown-timer", interval=1000, n_intervals=0),
-    html.Div("Countdown",id="countdown", style={
-            "position": "fixed",
-            "bottom": "10px",
-            "left": "10px",
-            "backgroundColor": "#222",
-            "color": "#aaa",
-            "padding": "10px",
-            "borderRadius": "8px",
-            "zIndex": "1000"})
-    ], fluid=True, class_name="mt-4 mx-4")
+    html.Div("Countdown", id="countdown", style={
+        "position": "fixed",
+        "bottom": "10px",
+        "left": "10px",
+        "backgroundColor": "#222",
+        "color": "#aaa",
+        "padding": "10px",
+        "borderRadius": "8px",
+        "zIndex": "1000"
+    })
+], fluid=True, class_name="mt-4")
 
 # Temperatur-Callback
 @app.callback(
@@ -94,17 +141,25 @@ def aktualisiere_daten(n_intervals):
     zeit = temp_df.sort_values("zeitstempel").iloc[-1]["zeitstempel"]
     zeit_dt = pd.to_datetime(zeit).astimezone(ZoneInfo("Europe/Berlin"))
     zeit_string = zeit_dt.strftime("Stand: %d.%m.%Y – %H:%M")
-    wert_text = f"{round(letzter_wert)} °C "
+    wert_text = f"{round(letzter_wert)}"
 
     return wert_text
 
 # Windbox leeren
 @app.callback(
-    Output("sensor1-box", "children"),
+    Output("wind-wert", "children"),
     Input("auto-update", "n_intervals")
 )
 def leere_windbox(n):
-    return "Test-Sensor1"
+    return "Windbox"
+
+@app.callback(
+    Output("regen-wert", "children"),
+    Input("auto-update", "n_intervals")
+)
+def regen_anzeigen(n):
+    return "Regenbox"
+
 
 # Countdown-Callback
 @app.callback(
