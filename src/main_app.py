@@ -245,7 +245,6 @@ app.layout = html.Div([
             "flexDirection": "column",
             "justifyContent": "space-between",
             "alignItems": "center",
-            "width": "1150px",
             "padding": "30px",
             "borderRadius": "30px",
             "backgroundColor": "#ECF0F3",
@@ -253,15 +252,21 @@ app.layout = html.Div([
             "color": "white",
             "position": "relative",
             "overflow": "hidden",
-            "marginLeft": "40px"
+            "maxWidth": "1200px",         # ✅ genişliği sınırla ama esnek bırak
+            "width": "100%",              # ✅ tam ekran genişliği kullan
+            "boxSizing": "border-box",    # ✅ padding taşma yapmasın
+            "padding": "30px"
         })
 
     ], style={
         "display": "flex",
         "flexDirection": "row",
+        "flexWrap": "wrap",  # <-- kutular alt satıra geçebilir
+        "justifyContent": "center",  # <-- her şeyi ortala
         "alignItems": "flex-start",
+        "gap": "40px",               # <-- kutular arası boşluk
         "marginTop": "50px",
-        "marginLeft": "150px"
+        "width": "100%"              # <-- sabit margin yerine tam genişlik
     }),
 
     html.Div(id="countdown", style={
