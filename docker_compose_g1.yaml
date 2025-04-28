@@ -30,7 +30,7 @@ services:
       DB_USER: gruppeeins
       DB_PASSWORD: mypassword
       DB_HOST: db
-      DB_PORT: 5432
+      DB_PORT: 5433
       DB_NAME: umwelt_db
       SENSEBOX_ID: "67a661af4ef45d0008682744"
     depends_on:
@@ -38,6 +38,23 @@ services:
         condition: service_healthy
     volumes:
       - ./src:/app
-
+  ml:
+    build:
+      context: ./ml
+      dockerfile: Dockerfile
+    container_name: ml_model
+    ports:
+      - "5000:5000"
+    environment:
+      DB_USER: gruppeeins
+      DB_PASSWORD: mypassword
+      DB_HOST: db
+      DB_PORT: 5433
+      DB_NAME: umwelt_db
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./ml:/app
 volumes:
   db_data:
