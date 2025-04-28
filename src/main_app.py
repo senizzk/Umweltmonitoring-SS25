@@ -69,7 +69,11 @@ def sensor_card(icon, label, id, unit, color="#007bff"):
                 html.Span(unit, className="fs-2 text-muted")
             ], className="d-flex align-items-end")
         ]),
-        class_name="shadow-sm rounded bg-light"
+        class_name="p-3", style={
+            "boxShadow": "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
+            "borderRadius": "0.5rem",
+            "backgroundColor": "#f8f9fa"
+        },
     )
 
 
