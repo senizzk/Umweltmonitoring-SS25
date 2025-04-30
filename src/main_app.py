@@ -30,7 +30,7 @@ app = dash.Dash(__name__, external_stylesheets=[
 ])
 app.title = "Umweltmonitoring Dashboard"
 
-# 🔍 DB'den geçmiş veriyi al
+# Holt historische Messdaten aus der Datenbank für einen Sensor
 
 def verlaufsdaten_aus_db(sensor_id, box_id=BOX_ID):
     query = text("""
@@ -43,7 +43,7 @@ def verlaufsdaten_aus_db(sensor_id, box_id=BOX_ID):
         df = pd.read_sql(query, conn, params={"sensor_id": sensor_id, "box_id": box_id})
     return df
 
-# 📈 Geçmiş verileri gösteren grafik
+# Erzeugt eine Karte mit einem Liniendiagramm zum Temperaturverlauf
 
 def verlaufsdiagramm_card(sensor_id):
     df = verlaufsdaten_aus_db(sensor_id)
@@ -64,35 +64,36 @@ def verlaufsdiagramm_card(sensor_id):
         class_name="shadow-sm bg-light rounded"
     )
 
-# 📆 Tahmin kartı bileşeni (boş grafik)
+# Leere Karte für die spätere Anzeige der Prognose-Grafik
 def temperatur_prognose_card():
     return dbc.Card(
         dbc.CardBody([
-            html.H5("📆 7 Günlük Sıcaklık Tahmini", className="card-title"),
+            html.H5("📆 7-Tage-Temperaturvorhersage", className="card-title"),
             dcc.Graph(id="forecast-graph")
         ]),
         class_name="shadow-sm bg-light rounded"
     )
 
-# 🔴 Gerçek zamanlı sıcaklık kartı
+# 🔴 Karte zur Anzeige der aktuellen Temperatur
 def live_temperature_card():
     return dbc.Card(
         dbc.CardBody([
-            html.H5("🌡️ Anlık Sıcaklık", className="card-title"),
+            html.H5("🌡️ Temperatur", className="card-title"),
             html.H2(id="live-temperature", className="text-center text-primary")
         ]),
         class_name="shadow-sm bg-light rounded",
         style={"height": "150px"}
     )
 
-# Stil Kartları
-def placeholder_card(text="Boş Kart"):
+# Platzhalter-Karte für leere Bereiche im Layout
+def placeholder_card(text="Platzhalter-Karte"):
     return dbc.Card(
         dbc.CardBody(html.Div(text, className="text-center text-muted fs-5")),
         class_name="shadow-sm rounded bg-light",
         style={"height": "150px"}
     )
 
+# Flex-Karte für verschachtelte Layouts
 def flex_card(text, flex=1):
     return html.Div(
         dbc.Card(
@@ -102,6 +103,7 @@ def flex_card(text, flex=1):
         style={"flex": flex, "display": "flex"}
     )
 
+# Erzeugt ein Layout mit mehreren kleinen Karten nebeneinander
 def nested_cards():
     return dbc.Card(
         dbc.CardBody([
@@ -123,11 +125,11 @@ def nested_cards():
         ])
     )
 
-# 🔧 Layout
+# 🔧 Gesamtlayout der Seite mit Intervallen für Live-Updates und Modelltraining
 app.layout = dbc.Container([
-    dcc.Interval(id="daily-model-update", interval=86400 * 1000, n_intervals=0),  # 1 günde bir
-    dcc.Interval(id="countdown-timer", interval=1000, n_intervals=0),
-    dcc.Interval(id="live-update", interval=180 * 1000, n_intervals=0),  # her 3 dakikada bir güncelle
+    dcc.Interval(id="daily-model-update", interval=86400 * 1000, n_intervals=0),  # Modell-Update täglich
+    dcc.Interval(id="countdown-timer", interval=1000, n_intervals=0),   # Countdown jede Sekunde
+    dcc.Interval(id="live-update", interval=180 * 1000, n_intervals=0),  # Live-Daten alle 3 Minuten
 
     dbc.Row([
         dbc.Col(live_temperature_card(), md=4),
@@ -151,7 +153,7 @@ app.layout = dbc.Container([
     })
 ], fluid=True, class_name="px-5 mt-4")
 
-# Countdown (3 dakika olarak kalsın)
+# Zeigt Countdown bis zur nächsten Live-Aktualisierung
 @app.callback(
     Output("countdown", "children"),
     Input("countdown-timer", "n_intervals"),
@@ -163,7 +165,7 @@ def countdown_timer_render(n_intervals_count, _):
     sekunden = verbleibend % 60
     return f"Nächste Aktualisierung in: {minuten:02}:{sekunden:02}"
 
-# Prophet tahmini ve veri güncellemesi (günde 1)
+# Führt tägliches Training des Vorhersagemodells aus und zeigt die Prognosegrafik
 @app.callback(
     Output("forecast-graph", "figure"),
     Input("daily-model-update", "n_intervals")
@@ -179,21 +181,21 @@ def update_forecast_figure(_):
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=forecast_min['ds'], y=forecast_min['yhat'],
-        mode='lines+markers', name='Min Tahmin', line=dict(color='blue')
+        mode='lines+markers', name='Min Temp.', line=dict(color='blue')
     ))
     fig.add_trace(go.Scatter(
         x=forecast_max['ds'], y=forecast_max['yhat'],
-        mode='lines+markers', name='Max Tahmin', line=dict(color='red')
+        mode='lines+markers', name='Max Temp.', line=dict(color='red')
     ))
     fig.add_trace(go.Scatter(
         x=forecast_min['ds'], y=forecast_min['yhat'],
         mode='lines', fill='tonexty', showlegend=False,
         fillcolor='rgba(255, 0, 0, 0.1)', line=dict(width=0)
     ))
-    fig.update_layout(title="7 Günlük Sıcaklık Tahmini", height=300)
+    fig.update_layout(title="7-Tage-Temperaturvorhersage", height=300)
     return fig
 
-# Gerçek zamanlı sıcaklık verisini güncelle (3 dakikada bir)
+# Holt aktuelle Temperaturdaten (alle 3 Minuten) und zeigt den letzten Wert an
 @app.callback(
     Output("live-temperature", "children"),
     Input("live-update", "n_intervals")
@@ -202,12 +204,13 @@ def update_live_temperature(_):
     df = daten_von_api_holen()
     daten_in_datenbank_schreiben(df)
 
-    latest = df[df["sensor_id"] == SENSOR_ID]
-    if latest.empty:
+    temp_df = df[df["einheit"] == "°C"]
+    if temp_df.empty:
         return "- °C"
-    wert = latest["messwert"].values[0]
-    return f"{wert:.1f} °C"
 
-# App starten
+    letzter_wert = temp_df.sort_values("zeitstempel").iloc[-1]["messwert"]
+    return f"{letzter_wert:.1f} °C"
+
+# Startet den Dash-Server
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050, debug=True)
