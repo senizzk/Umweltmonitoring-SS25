@@ -17,3 +17,15 @@ CREATE TABLE IF NOT EXISTS sensor_daten (
 
 -- Konvertiert die Tabelle in eine sogenannte "Hypertable" für Zeitreihendaten
 SELECT create_hypertable('sensor_daten', 'zeitstempel', if_not_exists => TRUE);
+
+-- Tabelle für historische Verlaufsdaten
+CREATE TABLE IF NOT EXISTS sensor_verlauf (
+    zeitstempel TIMESTAMPTZ NOT NULL,
+    box_id TEXT NOT NULL,
+    sensor_id TEXT NOT NULL,
+    messwert DOUBLE PRECISION,
+    UNIQUE (zeitstempel, box_id, sensor_id)
+);
+
+-- Als Hypertable anlegen
+SELECT create_hypertable('sensor_verlauf', 'zeitstempel', if_not_exists => TRUE);
