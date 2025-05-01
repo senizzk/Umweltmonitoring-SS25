@@ -3,7 +3,7 @@ version: "3.9"
 services:
   db:
     image: timescale/timescaledb:latest-pg15
-    container_name: gruppeeins_umwelt
+    container_name: gruppeeins_umwelt_db
     environment:
       POSTGRES_USER: gruppeeins
       POSTGRES_PASSWORD: mypassword
@@ -12,7 +12,7 @@ services:
       - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./init:/docker-entrypoint-initdb.d
+      - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U gruppeeins -d umwelt_db"]
       interval: 5s
