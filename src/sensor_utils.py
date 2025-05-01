@@ -2,6 +2,9 @@ import os
 import requests
 import pandas as pd
 from sqlalchemy import create_engine, text
+from datetime import datetime, timedelta, timezone
+from prophet import Prophet
+
 
 # Umgebungsvariablen (aus Docker Compose oder .env)
 DB_USER = os.getenv("DB_USER", "gruppeeins")
@@ -85,3 +88,101 @@ def daten_in_datenbank_schreiben(df, box_id=SENSEBOX_ID, box_name="Unbekannt"):
                 "sensor_typ": zeile["sensor_typ"],
                 "icon": zeile["icon"]
             })
+
+
+def verlauf_daten_von_api_holen(sensor_id, box_id=SENSEBOX_ID, tage=10):
+    """
+    Holt historische Messwerte eines Sensors basierend auf dem letzten Messzeitpunkt,
+    oder nutzt datetime.now() falls keiner vorhanden ist.
+    """
+    # 1. Box-Daten holen
+    url_box = f"https://api.opensensemap.org/boxes/{box_id}?format=json"
+    response = requests.get(url_box)
+    response.raise_for_status()
+    box_daten = response.json()
+
+    # 2. Sensor finden
+    sensoren = box_daten.get("sensors", [])
+    sensor_info = next((s for s in sensoren if s["_id"] == sensor_id), None)
+
+    # 3. Zeitbereich bestimmen
+    if sensor_info and "lastMeasurement" in sensor_info:
+        bis_datum = pd.to_datetime(sensor_info["lastMeasurement"]["createdAt"], utc=True)
+    else:
+        print("⚠️ Kein letzter Messwert gefunden – fallback to now()")
+        bis_datum = datetime.now(timezone.utc)
+
+    von_datum = bis_datum - timedelta(days=tage)
+
+    # 4. Daten abrufen
+    url_data = (
+        f"https://api.opensensemap.org/boxes/{box_id}/data/{sensor_id}"
+        f"?from-date={von_datum.strftime('%Y-%m-%dT%H:%M:%SZ')}&to-date={bis_datum.strftime('%Y-%m-%dT%H:%M:%SZ')}&download=false"
+    )
+
+    response = requests.get(url_data)
+    response.raise_for_status()
+    daten_roh = response.json()
+
+    if not daten_roh:
+        print("⚠️ Keine historischen Daten gefunden.")
+        return None
+
+    df = pd.DataFrame(daten_roh, columns=["createdAt", "value"])
+    df['zeitstempel'] = pd.to_datetime(df['createdAt'], errors='coerce')
+    df['messwert'] = pd.to_numeric(df['value'], errors='coerce')
+    df = df[['zeitstempel', 'messwert']].dropna()
+    df['sensor_id'] = sensor_id
+    df['box_id'] = box_id
+
+    return df
+
+
+def verlauf_in_datenbank_schreiben(df):
+    """
+    Schreibt historische Verlaufsdaten in die Datenbank-Tabelle 'sensor_verlauf'.
+    """
+    if df is None or df.empty:
+        print("⚠️ Keine Verlaufsdaten zum Einfügen.")
+        return
+
+    with engine.begin() as conn:
+        for _, zeile in df.iterrows():
+            conn.execute(text("""
+                INSERT INTO sensor_verlauf (
+                    zeitstempel, box_id, sensor_id, messwert
+                ) VALUES (
+                    :zeitstempel, :box_id, :sensor_id, :messwert
+                )
+                ON CONFLICT (zeitstempel, box_id, sensor_id) DO NOTHING;
+            """), {
+                "zeitstempel": zeile["zeitstempel"],
+                "box_id": zeile["box_id"],
+                "sensor_id": zeile["sensor_id"],
+                "messwert": zeile["messwert"]
+            })
+
+
+def fetch_daily_min_max(sensor_id, box_id=SENSEBOX_ID):
+    query = text("""
+        SELECT zeitstempel::date AS datum, MIN(messwert) as min_val, MAX(messwert) as max_val
+        FROM sensor_verlauf
+        WHERE sensor_id = :sensor_id AND box_id = :box_id
+        GROUP BY datum
+        ORDER BY datum ASC
+    """)
+    with engine.connect() as conn:
+        df = pd.read_sql(query, conn, params={"sensor_id": sensor_id, "box_id": box_id})
+    return df
+
+def create_forecast(df, value_column='min_val', days_ahead=7):
+    df_prophet = df[['datum', value_column]].rename(columns={'datum': 'ds', value_column: 'y'})
+    df_prophet.dropna(inplace=True)
+
+    model = Prophet(daily_seasonality=True)
+    model.fit(df_prophet)
+
+    future = model.make_future_dataframe(periods=days_ahead)
+    forecast = model.predict(future)
+
+    return forecast[['ds', 'yhat']].tail(days_ahead)

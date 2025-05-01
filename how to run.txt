@@ -1,3 +1,5 @@
 öffne Docker Desktop
 dann in vscode terminal --> docker compose -f docker_compose_g1.yaml up --build
 letztens in web browser-- > http://localhost:8050/
+
+auf andere branch: sie Screenshot und wählt style_test/main
