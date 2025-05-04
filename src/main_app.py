@@ -201,7 +201,7 @@ def update_forecast_figure(_):
     Input("live-update", "n_intervals")
 )
 def update_live_temperature(_):
-    df = daten_von_api_holen()
+    df, name = daten_von_api_holen()
     daten_in_datenbank_schreiben(df)
 
     temp_df = df[df["einheit"] == "°C"]
