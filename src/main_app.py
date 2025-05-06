@@ -10,7 +10,8 @@ from sensor_utils import (
     fetch_daily_min_max,
     create_forecast,
     verlauf_daten_von_api_holen,
-    verlauf_in_datenbank_schreiben
+    verlauf_in_datenbank_schreiben,
+    fetch_data_today
 )
 import os
 from sqlalchemy import create_engine, text
@@ -85,6 +86,16 @@ def live_temperature_card():
         style={"height": "150px"}
     )
 
+def live_rain_card():
+    return dbc.Card(
+        dbc.CardBody([
+            html.H5("🌧️ Regen", className="card-title"),
+            html.H2(id="live-rain", className="text-center text-primary")
+        ]),
+        class_name="shadow-sm bg-light rounded",
+        style={"height": "150px"}
+    )
+
 # Platzhalter-Karte für leere Bereiche im Layout
 def placeholder_card(text="Platzhalter-Karte"):
     return dbc.Card(
@@ -141,6 +152,11 @@ app.layout = dbc.Container([
         dbc.Col(verlaufsdiagramm_card(SENSOR_ID), md=6),
     ], class_name="mb-4"),
 
+    # Add the live rain card below everything else
+    dbc.Row([
+    dbc.Col(live_rain_card(), md=4),  # Add rain card here
+], class_name="mb-5"),
+
     html.Div("Countdown", id="countdown", style={
         "position": "fixed",
         "bottom": "10px",
@@ -159,6 +175,7 @@ app.layout = dbc.Container([
     Input("countdown-timer", "n_intervals"),
     Input("daily-model-update", "n_intervals")
 )
+
 def countdown_timer_render(n_intervals_count, _):
     verbleibend = 180 - (n_intervals_count % 180)
     minuten = verbleibend // 60
@@ -210,6 +227,26 @@ def update_live_temperature(_):
 
     letzter_wert = temp_df.sort_values("zeitstempel").iloc[-1]["messwert"]
     return f"{letzter_wert:.1f} °C"
+
+@app.callback(
+    Output("live-rain", "children"),
+    Input("live-update", "n_intervals")
+)
+def update_live_rain():
+    # Fetch the data from the API
+    df, name = daten_von_api_holen()
+
+    # Filter for the rain sensor (adjust filter if necessary based on actual sensor type or name)
+    rain_df = df[df["sensor_typ"] == "Vevor"]  # Adjust this filter if necessary based on your sensor
+    rain_df = rain_df[rain_df["sensor_name"].str.contains("Rain Hourly")]  # Adjust if necessary
+
+    if rain_df.empty:
+        return "- mm"  # No data available
+
+    # Get the most recent value
+    letzter_wert = rain_df.sort_values("zeitstempel").iloc[-1]["messwert"]
+    return f"{letzter_wert:.1f} mm"  # Format the value as mm
+
 
 # Startet den Dash-Server
 if __name__ == "__main__":
