@@ -1,0 +1,11 @@
+_id,icon,title,unit,sensorType
+67a661af4ef45d0008682745,osem-thermometer,Temperature,°C,BMP280
+67a661af4ef45d0008682746,osem-barometer,Pressure,Pa,BMP280
+67a661af4ef45d0008682747,osem-moisture,Rain daily,mm,Vevor
+67a661af4ef45d0008682748,osem-humidity,Humidity,%,SHT4x
+67a661af4ef45d0008682749,osem-particulate-matter,Wind speed,kmh,Vevor
+67a661af4ef45d000868274a,osem-particulate-matter,Wind direction,°,Vevor
+67a661af4ef45d000868274b,osem-dashboard,PM 2.5,µg/m³,SPS30
+67a661af4ef45d000868274c,osem-dashboard,PM 10,µg/m³,SPS30
+67a7ab164ef45d00089ef795,osem-moisture,Rain hourly,mm,Vevor
+67a7ab164ef45d00089ef797,osem-brightness,Outside Luminance,Lux,BH1750

@@ -22,9 +22,10 @@ engine = create_engine(DB_URL)
 
 # SenseBox-ID
 BOX_ID = os.getenv("SENSEBOX_ID")
-SENSOR_ID_TEMP = "60a048f7a877b3001b1f9996"
-SENSOR_ID_RAIN_H = "67a7ab164ef45d00089ef795"
-SENSORS = [SENSOR_ID_TEMP, SENSOR_ID_RAIN_H]
+sensors_read = pd.read_csv("sensors.csv")
+SENSORS = dict(zip(sensors_read["title"], sensors_read["_id"]))
+SENSOR_ID_TEMP = SENSORS["Temperature"]
+SENSOR_ID_RAIN_H = SENSORS["Rain hourly"]
 
 # Dash App mit Montserrat-Font
 app = dash.Dash(__name__, external_stylesheets=[
@@ -143,6 +144,7 @@ app.layout = dbc.Container([
     dcc.Interval(id="daily-model-update", interval=86400 * 1000, n_intervals=0),  # Modell-Update täglich
     dcc.Interval(id="countdown-timer", interval=1000, n_intervals=0),   # Countdown jede Sekunde
     dcc.Interval(id="live-update", interval=180 * 1000, n_intervals=0),  # Live-Daten alle 3 Minuten
+    dcc.Interval(id="database-update", interval=60*60*3 * 1000, n_intervals=0),  # Modell-Update täglich
 
     dbc.Row([
         dbc.Col(live_temperature_card(), md=4),
@@ -198,7 +200,7 @@ def countdown_timer_render(n_intervals_count, _):
 @app.callback(
     Output("forecast-graph", "figure"),
     Input("daily-model-update", "n_intervals")
-)
+)   
 def update_forecast_figure(_):
     verlauf_df = verlauf_daten_von_api_holen(SENSOR_ID_TEMP)
     verlauf_in_datenbank_schreiben(verlauf_df)
@@ -261,10 +263,10 @@ def update_live_rain(_):
 
 @app.callback(
     Output("dummy-div", "children"),
-    Input("daily-model-update", "n_intervals")
+    Input("database-update", "n_intervals")
 )
 def update_datenbank(_):
-    for sensor_id in SENSORS:
+    for sensor_id in SENSORS.values():
         verlauf_df = verlauf_daten_von_api_holen(sensor_id)
         verlauf_in_datenbank_schreiben(verlauf_df)
         # Fetch today's data and write to the database
