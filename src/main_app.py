@@ -24,6 +24,7 @@ engine = create_engine(DB_URL)
 BOX_ID = os.getenv("SENSEBOX_ID")
 SENSOR_ID_TEMP = "60a048f7a877b3001b1f9996"
 SENSOR_ID_RAIN_H = "67a7ab164ef45d00089ef795"
+SENSORS = [SENSOR_ID_TEMP, SENSOR_ID_RAIN_H]
 
 # Dash App mit Montserrat-Font
 app = dash.Dash(__name__, external_stylesheets=[
@@ -257,6 +258,14 @@ def update_live_rain(_):
     letzter_wert = rain_df.sort_values("zeitstempel").iloc[-1]["messwert"]
     return f"{letzter_wert:.1f} mm"  # Format the value as mm
 
+@app.callback(
+    Input("daily-model-update", "n_intervals")
+)
+def update_datenbank(_):
+    for sensor_id in SENSORS:
+        verlauf_df = verlauf_daten_von_api_holen(sensor_id)
+        verlauf_in_datenbank_schreiben(verlauf_df)
+        # Fetch today's data and write to the database
 
 # Startet den Dash-Server
 if __name__ == "__main__":
