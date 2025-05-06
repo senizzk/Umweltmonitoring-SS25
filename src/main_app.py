@@ -22,7 +22,8 @@ engine = create_engine(DB_URL)
 
 # SenseBox-ID
 BOX_ID = os.getenv("SENSEBOX_ID")
-SENSOR_ID = "60a048f7a877b3001b1f9996"
+SENSOR_ID_TEMP = "60a048f7a877b3001b1f9996"
+SENSOR_ID_RAIN_H = "67a7ab164ef45d00089ef795"
 
 # Dash App mit Montserrat-Font
 app = dash.Dash(__name__, external_stylesheets=[
@@ -46,24 +47,24 @@ def verlaufsdaten_aus_db(sensor_id, box_id=BOX_ID):
 
 # Erzeugt eine Karte mit einem Liniendiagramm zum Temperaturverlauf
 
-def verlaufsdiagramm_card(sensor_id):
+def verlaufsdiagramm_card(sensor_id, title, messwert, card_title):
     df = verlaufsdaten_aus_db(sensor_id)
-
     if df.empty:
         fig = go.Figure()
         fig.add_annotation(text="Keine Daten", x=0.5, y=0.5, showarrow=False)
     else:
-        fig = px.line(df, x="zeitstempel", y="messwert", title="Temperaturverlauf (10 Tage)",
-                      labels={"zeitstempel": "Zeit", "messwert": "Temperatur (°C)"})
+        fig = px.line(df, x="zeitstempel", y="messwert", title=f"{title}",
+                      labels={"zeitstempel": "Zeit", "messwert": f'{messwert}'})
         fig.update_layout(margin=dict(t=30, b=20, l=0, r=0), height=300)
 
     return dbc.Card(
         dbc.CardBody([
-            html.H5("📈 Temperatur Verlauf", className="card-title"),
+            html.H5(f'{card_title}', className="card-title"),
             dcc.Graph(figure=fig)
         ]),
         class_name="shadow-sm bg-light rounded"
     )
+
 
 # Leere Karte für die spätere Anzeige der Prognose-Grafik
 def temperatur_prognose_card():
@@ -149,12 +150,21 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col(temperatur_prognose_card(), md=6),
-        dbc.Col(verlaufsdiagramm_card(SENSOR_ID), md=6),
+        dbc.Col(verlaufsdiagramm_card(
+            sensor_id=SENSOR_ID_TEMP,
+            title="Temperaturverlauf (10 Tage)",
+            messwert="Temperatur (°C)",
+            card_title="📈 Temperatur Verlauf"), md=6)
     ], class_name="mb-4"),
 
     # Add the live rain card below everything else
     dbc.Row([
-    dbc.Col(live_rain_card(), md=4),  # Add rain card here
+    dbc.Col(live_rain_card(), md=4),
+    dbc.Col(verlaufsdiagramm_card(
+        sensor_id=SENSOR_ID_RAIN_H,
+        title="Regenverlauf (10 Tage)",
+        messwert="Regenvolum (mm)",
+        card_title="📈 Regenverlauf"), md=6)  
 ], class_name="mb-5"),
 
     html.Div("Countdown", id="countdown", style={
@@ -188,10 +198,10 @@ def countdown_timer_render(n_intervals_count, _):
     Input("daily-model-update", "n_intervals")
 )
 def update_forecast_figure(_):
-    verlauf_df = verlauf_daten_von_api_holen(SENSOR_ID)
+    verlauf_df = verlauf_daten_von_api_holen(SENSOR_ID_TEMP)
     verlauf_in_datenbank_schreiben(verlauf_df)
 
-    df = fetch_daily_min_max(SENSOR_ID)
+    df = fetch_daily_min_max(SENSOR_ID_TEMP)
     forecast_min = create_forecast(df, 'min_val')
     forecast_max = create_forecast(df, 'max_val')
 
@@ -232,13 +242,13 @@ def update_live_temperature(_):
     Output("live-rain", "children"),
     Input("live-update", "n_intervals")
 )
-def update_live_rain():
+def update_live_rain(_):
     # Fetch the data from the API
     df, name = daten_von_api_holen()
 
     # Filter for the rain sensor (adjust filter if necessary based on actual sensor type or name)
     rain_df = df[df["sensor_typ"] == "Vevor"]  # Adjust this filter if necessary based on your sensor
-    rain_df = rain_df[rain_df["sensor_name"].str.contains("Rain Hourly")]  # Adjust if necessary
+    #rain_df = rain_df[rain_df["sensor_name"].str.contains("Rain Hourly")]  # Adjust if necessary
 
     if rain_df.empty:
         return "- mm"  # No data available
