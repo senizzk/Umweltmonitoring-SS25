@@ -186,3 +186,12 @@ def create_forecast(df, value_column='min_val', days_ahead=7):
     forecast = model.predict(future)
 
     return forecast[['ds', 'yhat']].tail(days_ahead)
+
+def fetch_data_today(sensor_id, box_id=SENSEBOX_ID, selection=None, table='sensor_daten', condition=None, orderby=None):
+    allowed_columns = ['zeitstempel', 'box_id','sensor_name' ,'sensor_id', 'messwert', 'einheit', 'sensor_typ', 'icon']
+    if not set(selection).issubset(allowed_columns):
+        raise ValueError("Ungültige Spaltennamen")
+    query = text(f"SELECT {', '.join(selection)} FROM {table} WHERE sensor_id = :sensor_id AND box_id = :box_id AND zeitstempel::date = CURRENT_DATE")
+    with engine.connect() as conn:
+        df = pd.read_sql(query, conn, params={"sensor_id": sensor_id, "box_id": box_id})
+    return df
