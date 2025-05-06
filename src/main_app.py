@@ -177,7 +177,8 @@ app.layout = dbc.Container([
         "padding": "10px",
         "borderRadius": "8px",
         "zIndex": "1000"
-    })
+    }),
+    html.Div(id='dummy-div', style={'display': 'none'})
 ], fluid=True, class_name="px-5 mt-4")
 
 # Zeigt Countdown bis zur nächsten Live-Aktualisierung
@@ -230,7 +231,7 @@ def update_forecast_figure(_):
 )
 def update_live_temperature(_):
     df, name = daten_von_api_holen()
-    daten_in_datenbank_schreiben(df)
+    daten_in_datenbank_schreiben(df,box_id = BOX_ID, box_name=name)
 
     temp_df = df[df["einheit"] == "°C"]
     if temp_df.empty:
@@ -259,6 +260,7 @@ def update_live_rain(_):
     return f"{letzter_wert:.1f} mm"  # Format the value as mm
 
 @app.callback(
+    Output("dummy-div", "children"),
     Input("daily-model-update", "n_intervals")
 )
 def update_datenbank(_):
