@@ -71,10 +71,10 @@ def daten_in_datenbank_schreiben(df, box_id=SENSEBOX_ID, box_name="Unbekannt"):
         for _, zeile in df.iterrows():
             conn.execute(text("""
                 INSERT INTO sensor_daten (
-                    zeitstempel, box_id, sensor_id, messwert,
+                    zeitstempel, box_id, sensor_name, sensor_id, messwert,
                     einheit, sensor_typ, icon
                 ) VALUES (
-                    :zeitstempel, :box_id, :sensor_id, :messwert,
+                    :zeitstempel, :box_id, :sensor_name, :sensor_id, :messwert,
                     :einheit, :sensor_typ, :icon
                 )
                 ON CONFLICT (zeitstempel, box_id, sensor_id) DO NOTHING;
