@@ -10,8 +10,7 @@ from sensor_utils import (
     fetch_daily_min_max,
     create_forecast,
     verlauf_daten_von_api_holen,
-    verlauf_in_datenbank_schreiben
-)
+    verlauf_in_datenbank_schreiben)
 import os
 from sqlalchemy import create_engine, text
 
@@ -21,7 +20,7 @@ engine = create_engine(DB_URL)
 
 # SenseBox-ID
 BOX_ID = os.getenv("SENSEBOX_ID")
-SENSOR_ID = "60a048f7a877b3001b1f9996"
+SENSOR_ID = "67a661af4ef45d0008682745"
 
 # Dash App mit Montserrat-Font
 app = dash.Dash(__name__, external_stylesheets=[
@@ -117,8 +116,26 @@ def nested_cards():
             html.Div("Today's Highlight", className="text-muted fs-5 fw-semibold text-center mb-3"),
             dbc.Row([
                 dbc.Col([
-                    flex_card("Alt Kart 2.1", flex=2),
-                    flex_card("Alt Kart 2.4", flex=1)
+                    html.Div(
+                        dbc.Card(
+                            dbc.CardBody([
+                                html.H5("🌧️ Regen", className="card-title"),
+                                html.H2(id="rain-value", className="text-center text-primary")
+                            ]),
+                            class_name="shadow-sm bg-light w-100 h-100 rounded"
+                        ),
+                        style={"flex": 2, "display": "flex"}
+                    ),
+                    html.Div(
+                        dbc.Card(
+                            dbc.CardBody([
+                                html.H5("💧 Luftfeuchtigkeit", className="card-title"),
+                                html.H2(id="humidity-value", className="text-center text-primary")
+                            ]),
+                            class_name="shadow-sm bg-light w-100 h-100 rounded"
+                        ),
+                        style={"flex": 1, "display": "flex"}
+                    )
                 ], width=4, style={"display": "flex", "flexDirection": "column", "gap": "0.5rem"}),
                 dbc.Col([
                     html.Div(
@@ -316,8 +333,8 @@ def update_pm_value(pm_type, _):
         return "Keine PM-Daten"
 
     pm_ids = {
-        "2.5": "60a04b94a877b3001b20d26c",
-        "10":  "60a04b94a877b3001b20d26d"
+        "2.5": "67a661af4ef45d000868274b",
+        "10":  "67a661af4ef45d000868274c"
     }
 
     sensor_id = pm_ids[pm_type]
@@ -332,6 +349,37 @@ def update_pm_value(pm_type, _):
     wert = float(pm_df.sort_values("zeitstempel").iloc[-1]["messwert"])
     return f"PM{pm_type}: {wert:.1f} µg/m³"
 
+@app.callback(
+    Output("rain-value", "children"),
+    Input("live-update", "n_intervals")
+)
+def update_rain_value(_):
+    df = daten_von_api_holen()
+    if df is None or df.empty:
+        return "Keine Daten"
+
+    rain_df = df[df["einheit"] == "mm"]
+    if rain_df.empty:
+        return "Keine Regendaten"
+
+    latest = rain_df.sort_values("zeitstempel").iloc[-1]["messwert"]
+    return f"{latest:.1f} mm"
+
+@app.callback(
+    Output("humidity-value", "children"),
+    Input("live-update", "n_intervals")
+)
+def update_humidity_value(_):
+    df = daten_von_api_holen()
+    if df is None or df.empty:
+        return "Keine Daten"
+
+    humidity_df = df[df["einheit"] == "%"]
+    if humidity_df.empty:
+        return "Keine Feuchtigkeitsdaten"
+
+    latest = humidity_df.sort_values("zeitstempel").iloc[-1]["messwert"]
+    return f"{latest:.0f} %"
 
 
 
