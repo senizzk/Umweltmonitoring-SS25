@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
+import math
 from sensor_utils import (
     daten_von_api_holen,
     daten_in_datenbank_schreiben,
@@ -144,7 +145,8 @@ def nested_cards():
                                 html.H5([
                                     html.I(className="bi bi-wind me-2"),
                                     "Wind"
-                                ], className="card-title mb-2")
+                                ], className="card-title mb-2"),
+                                dcc.Graph(id="wind-arrow", config={"displayModeBar": False}, style={"height": "220px"})
                             ]),
                             class_name="shadow-sm bg-light w-100 h-100 rounded"
                         ),
@@ -214,6 +216,42 @@ def pressure_gauge_figure(pressure_value):
     fig.update_layout(margin=dict(t=0, b=0, l=0, r=0), height=170)
     return fig
 
+def wind_arrow_figure(direction_deg, speed_kmh):
+    direction_rad = math.radians(direction_deg)
+
+    # Ok ucunu hesapla
+    x = math.sin(direction_rad)
+    y = math.cos(direction_rad)
+
+    fig = go.Figure()
+
+    # Wind direction arrow
+    fig.add_trace(go.Scatterpolar(
+        r=[0, speed_kmh],
+        theta=[0, direction_deg],
+        mode='lines+markers',
+        line=dict(color='skyblue', width=6),
+        marker=dict(size=8),
+        name=f"{direction_deg}° / {speed_kmh:.1f} km/h"
+    ))
+
+    # Stil ayarları
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(range=[0, max(10, speed_kmh + 2)], showticklabels=False, ticks=''),
+            angularaxis=dict(
+                rotation=90,
+                direction="clockwise",
+                tickmode='array',
+                tickvals=[0, 45, 90, 135, 180, 225, 270, 315],
+                ticktext=["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+            )
+        ),
+        showlegend=False,
+        margin=dict(t=20, b=20, l=20, r=20)
+    )
+
+    return fig
 
 
 # 🔧 Gesamtlayout der Seite mit Intervallen für Live-Updates und Modelltraining
@@ -380,6 +418,27 @@ def update_humidity_value(_):
 
     latest = humidity_df.sort_values("zeitstempel").iloc[-1]["messwert"]
     return f"{latest:.0f} %"
+
+@app.callback(
+    Output("wind-arrow", "figure"),
+    Input("live-update", "n_intervals")
+)
+def update_wind_arrow(_):
+    df = daten_von_api_holen()
+    if df is None or df.empty:
+        return go.Figure().add_annotation(text="Keine Daten", x=0.5, y=0.5, showarrow=False)
+
+    speed_df = df[df["einheit"] == "kmh"]
+    dir_df = df[df["einheit"] == "°"]
+
+    if speed_df.empty or dir_df.empty:
+        return go.Figure().add_annotation(text="Keine Winddaten", x=0.5, y=0.5, showarrow=False)
+
+    speed = float(speed_df.sort_values("zeitstempel").iloc[-1]["messwert"])
+    direction = float(dir_df.sort_values("zeitstempel").iloc[-1]["messwert"])
+
+    return wind_arrow_figure(direction, speed)
+
 
 
 

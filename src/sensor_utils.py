@@ -87,7 +87,7 @@ def daten_in_datenbank_schreiben(df, box_id=SENSEBOX_ID):
             })
 
 
-def verlauf_daten_von_api_holen(sensor_id, box_id=SENSEBOX_ID, tage=10):
+def verlauf_daten_von_api_holen(sensor_id, box_id=SENSEBOX_ID, tage=7):
     """
     Holt historische Messwerte eines Sensors basierend auf dem letzten Messzeitpunkt,
     oder nutzt datetime.now() falls keiner vorhanden ist.
@@ -164,7 +164,7 @@ def fetch_daily_min_max(sensor_id, box_id=SENSEBOX_ID):
     query = text("""
         SELECT zeitstempel::date AS datum, MIN(messwert) as min_val, MAX(messwert) as max_val
         FROM sensor_verlauf
-        WHERE sensor_id = :sensor_id AND box_id = :box_id
+        WHERE sensor_id = :sensor_id AND box_id = :box_id 
         GROUP BY datum
         ORDER BY datum ASC
     """)

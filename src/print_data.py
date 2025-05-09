@@ -1,11 +1,10 @@
-from sensor_utils import daten_von_api_holen
+from sensor_utils import verlauf_daten_von_api_holen
 
-df = daten_von_api_holen()
+df = verlauf_daten_von_api_holen('67a661af4ef45d0008682745')
 
 if df is not None and not df.empty:
     print("📊 Veriler başarıyla alındı!")
-    print(df.head(20))  # İlk 20 satırı yazdır
+    print(df.tail(20))  # İlk 20 satırı yazdır
     print("\n📋 Sütunlar:", df.columns.tolist())
-    print("\n📈 Benzersiz sensör tipleri:", df["sensor_typ"].unique())
 else:
     print("⚠️ Hiç veri gelmedi.")
