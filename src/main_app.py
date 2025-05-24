@@ -65,12 +65,34 @@ def verlaufsdiagramm_card(sensor_id):
         class_name="shadow-sm bg-light rounded"
     )
 
+def temperatur_wochenkarte(forecast_min, forecast_max):
+    cards = []
+
+    for i in range(len(forecast_min)):
+        day = pd.to_datetime(forecast_min['ds'].iloc[i]).strftime('%a')  # 'Mon', 'Tue' ...
+        min_temp = forecast_min['yhat'].iloc[i]
+        max_temp = forecast_max['yhat'].iloc[i]
+
+        card = dbc.Card([
+            dbc.CardBody([
+                html.Div(day, className="fw-bold text-center"),
+                html.Div("🌦️", className="fs-3 text-center"),  # Hava durumu ikonu (istersen değiştirilebilir)
+                html.Div(f"{round(max_temp)}°", className="text-center fw-bold"),
+                html.Div(f"{round(min_temp)}°", className="text-center text-muted")
+            ])
+        ], class_name="text-center shadow-sm bg-light", style={"width": "100px", "margin": "0 5px"})
+
+        cards.append(card)
+
+    return html.Div(cards, style={"display": "flex", "justifyContent": "center", "gap": "10px"})
+
+
 # Leere Karte für die spätere Anzeige der Prognose-Grafik
 def temperatur_prognose_card():
     return dbc.Card(
         dbc.CardBody([
             html.H5("📆 7-Tage-Temperaturvorhersage", className="card-title"),
-            dcc.Graph(id="forecast-graph")
+            html.Div(id="forecast-graph")
         ]),
         class_name="shadow-sm bg-light rounded"
     )
@@ -298,10 +320,10 @@ def countdown_timer_render(n_intervals_count, _):
 
 # Führt tägliches Training des Vorhersagemodells aus und zeigt die Prognosegrafik
 @app.callback(
-    Output("forecast-graph", "figure"),
+    Output("forecast-graph", "children"),
     Input("daily-model-update", "n_intervals")
 )
-def update_forecast_figure(_):
+def update_forecast_ui(_):
     verlauf_df = verlauf_daten_von_api_holen(SENSOR_ID)
     verlauf_in_datenbank_schreiben(verlauf_df)
 
@@ -309,22 +331,8 @@ def update_forecast_figure(_):
     forecast_min = create_forecast(df, 'min_val')
     forecast_max = create_forecast(df, 'max_val')
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=forecast_min['ds'], y=forecast_min['yhat'],
-        mode='lines+markers', name='Min Temp.', line=dict(color='blue')
-    ))
-    fig.add_trace(go.Scatter(
-        x=forecast_max['ds'], y=forecast_max['yhat'],
-        mode='lines+markers', name='Max Temp.', line=dict(color='red')
-    ))
-    fig.add_trace(go.Scatter(
-        x=forecast_min['ds'], y=forecast_min['yhat'],
-        mode='lines', fill='tonexty', showlegend=False,
-        fillcolor='rgba(255, 0, 0, 0.1)', line=dict(width=0)
-    ))
-    fig.update_layout(title="7-Tage-Temperaturvorhersage", height=300)
-    return fig
+    return temperatur_wochenkarte(forecast_min, forecast_max)
+
 
 # Holt aktuelle Temperaturdaten (alle 3 Minuten) und zeigt den letzten Wert an
 @app.callback(
