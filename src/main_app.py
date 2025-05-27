@@ -11,7 +11,8 @@ from sensor_utils import (
     fetch_daily_min_max,
     create_forecast,
     verlauf_daten_von_api_holen,
-    verlauf_in_datenbank_schreiben)
+    verlauf_in_datenbank_schreiben,
+    box_info_holen)
 import os
 from sqlalchemy import create_engine, text
 
@@ -97,16 +98,25 @@ def temperatur_prognose_card():
         class_name="shadow-sm bg-light rounded"
     )
 
-# 🔴 Karte zur Anzeige der aktuellen Temperatur
-def live_temperature_card():
+def sensebox_info_card():
+    box_info = box_info_holen()
+
+    name = box_info["name"]
+    created_at = box_info["created_at"].strftime('%Y-%m-%d %H:%M') if box_info["created_at"] else "Unbekannt"
+    exposure = box_info["exposure"]
+
     return dbc.Card(
         dbc.CardBody([
-            html.H5("🌡️ Temperatur", className="card-title"),
-            html.H2(id="live-temperature", className="text-center text-primary")
+            html.H5(name, className="card-title"),
+            html.Div([
+                html.P(f"Erstellt am: {created_at}", className="mb-1"),
+                html.P(f"Standorttyp: {exposure}", className="mb-0")
+            ], className="text-muted")
         ]),
         class_name="shadow-sm bg-light rounded",
         style={"height": "150px"}
     )
+
 
 # Platzhalter-Karte für leere Bereiche im Layout
 def placeholder_card(text="Platzhalter-Karte"):
@@ -142,8 +152,8 @@ def nested_cards():
                     html.Div(
                         dbc.Card(
                             dbc.CardBody([
-                                html.H5("🌧️ Regen", className="card-title"),
-                                html.H2(id="rain-value", className="text-center text-primary")
+                                html.H5("🌡️ Temperatur", className="card-title"),
+                                html.H2(id="live-temperature", className="text-center text-primary")
                             ]),
                             class_name="shadow-sm bg-light w-100 h-100 rounded"
                         ),
@@ -152,13 +162,13 @@ def nested_cards():
                     html.Div(
                         dbc.Card(
                             dbc.CardBody([
-                                html.H5("💧 Luftfeuchtigkeit", className="card-title"),
-                                html.H2(id="humidity-value", className="text-center text-primary")
+                                html.H5("🌧️ Regen", className="card-title"),
+                                html.H2(id="rain-value", className="text-center text-primary")
                             ]),
                             class_name="shadow-sm bg-light w-100 h-100 rounded"
                         ),
                         style={"flex": 1, "display": "flex"}
-                    )
+                    ),
                 ], width=4, style={"display": "flex", "flexDirection": "column", "gap": "0.5rem"}),
                 dbc.Col([
                     html.Div(
@@ -174,7 +184,16 @@ def nested_cards():
                         ),
                         style={"flex": 2, "display": "flex"}
                     ),
-                    flex_card("Alt Kart 2.5", flex=1)
+                    html.Div(
+                        dbc.Card(
+                            dbc.CardBody([
+                                html.H5("💧 Luftfeuchtigkeit", className="card-title"),
+                                html.H2(id="humidity-value", className="text-center text-primary")
+                            ]),
+                            class_name="shadow-sm bg-light w-100 h-100 rounded"
+                        ),
+                        style={"flex": 1, "display": "flex"}
+                    )
                 ], width=4, style={"display": "flex", "flexDirection": "column", "gap": "0.5rem"}),
                 dbc.Col([
                     html.Div(
@@ -223,44 +242,39 @@ def pressure_gauge_figure(pressure_value):
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=pressure_value,
-        number={"suffix": " Pa"},
+        number={"suffix": "Pa", "font": {"size": 24}},
         gauge={
-            "axis": {"range": [90000, 110000], "tickwidth":1},
-            "bar": {"color": "royalblue","thickness": 0.8},
-            "threshold": {
-                "line": {"color": "blue", "width": 4},
-                "thickness": 0.75,
-                "value": pressure_value
-            }
+            'axis': {'range': [90000, 110000], 'tickwidth': 1, 'tickcolor': "gray"},
+            'bar': {'color': "royalblue"},
+            'borderwidth': 1
         },
-        domain={"x": [0, 1], "y": [0, 0.8]}
+        domain={'x': [0, 1], 'y': [0, 1]}
     ))
-    fig.update_layout(margin=dict(t=0, b=0, l=0, r=0), height=170)
+
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",  # ❗ Grafiğin dış kutusu saydam
+        plot_bgcolor="rgba(0,0,0,0)",   # ❗ İç alan (grafik arkası) da saydam
+        margin=dict(t=30, b=30, l=30, r=30),
+        height=220
+    )
     return fig
 
-def wind_arrow_figure(direction_deg, speed_kmh):
-    direction_rad = math.radians(direction_deg)
 
-    # Ok ucunu hesapla
-    x = math.sin(direction_rad)
-    y = math.cos(direction_rad)
-
+def wind_arrow_rose_chart(direction_deg, speed_kmh):
     fig = go.Figure()
 
-    # Wind direction arrow
-    fig.add_trace(go.Scatterpolar(
-        r=[0, speed_kmh],
-        theta=[0, direction_deg],
-        mode='lines+markers',
-        line=dict(color='skyblue', width=6),
-        marker=dict(size=8),
-        name=f"{direction_deg}° / {speed_kmh:.1f} km/h"
+    fig.add_trace(go.Barpolar(
+        r=[speed_kmh],
+        theta=[direction_deg],
+        name=f"{speed_kmh:.1f} km/h",
+        marker_color='skyblue',
+        opacity=0.8
     ))
 
-    # Stil ayarları
     fig.update_layout(
+        template=None,
         polar=dict(
-            radialaxis=dict(range=[0, max(10, speed_kmh + 2)], showticklabels=False, ticks=''),
+            radialaxis=dict(range=[0, max(10, speed_kmh + 2)], showticklabels=True, ticks='', angle=45),
             angularaxis=dict(
                 rotation=90,
                 direction="clockwise",
@@ -270,7 +284,9 @@ def wind_arrow_figure(direction_deg, speed_kmh):
             )
         ),
         showlegend=False,
-        margin=dict(t=20, b=20, l=20, r=20)
+        margin=dict(t=20, b=20, l=20, r=20),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)"
     )
 
     return fig
@@ -285,7 +301,7 @@ app.layout = dbc.Container([
     html.H1("Dashboard", className="display-4 mb-4 text-center fw-bold"),
 
     dbc.Row([
-        dbc.Col(live_temperature_card(), md=4),
+        dbc.Col(sensebox_info_card(), md=4),
         dbc.Col(nested_cards(), md=8),
     ], class_name="mb-5"),
 
@@ -445,7 +461,7 @@ def update_wind_arrow(_):
     speed = float(speed_df.sort_values("zeitstempel").iloc[-1]["messwert"])
     direction = float(dir_df.sort_values("zeitstempel").iloc[-1]["messwert"])
 
-    return wind_arrow_figure(direction, speed)
+    return wind_arrow_rose_chart(direction, speed)  
 
 
 

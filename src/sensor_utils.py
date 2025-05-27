@@ -183,3 +183,22 @@ def create_forecast(df, value_column='min_val', days_ahead=7):
     forecast = model.predict(future)
 
     return forecast[['ds', 'yhat']].tail(days_ahead)
+
+def box_info_holen(box_id = SENSEBOX_ID):
+    """
+    Holt allgemeine Informationen zur SenseBox (Name, createdAt, exposure).
+    """
+    url = f"https://api.opensensemap.org/boxes/{box_id}?format=json"
+    response = requests.get(url)
+    response.raise_for_status()
+    box = response.json()
+
+    name = box.get("name", "Unbekannt")
+    created_at = pd.to_datetime(box.get("createdAt", None))
+    exposure = box.get("exposure", "Unbekannt")
+
+    return {
+        "name": name,
+        "created_at": created_at,
+        "exposure": exposure
+    }
