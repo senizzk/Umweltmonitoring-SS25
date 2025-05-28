@@ -184,6 +184,7 @@ def create_forecast(df, value_column='min_val', days_ahead=7):
 
     return forecast[['ds', 'yhat']].tail(days_ahead)
 
+
 def box_info_holen(box_id = SENSEBOX_ID):
     """
     Holt allgemeine Informationen zur SenseBox (Name, createdAt, exposure).

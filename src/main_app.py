@@ -15,6 +15,13 @@ from sensor_utils import (
     box_info_holen)
 import os
 from sqlalchemy import create_engine, text
+import dash_daq as daq
+from zoneinfo import ZoneInfo
+from astral import LocationInfo
+from astral.sun import sun
+from datetime import datetime
+import pytz
+
 
 # Verbindung zur Datenbank
 DB_URL = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
@@ -32,39 +39,6 @@ app = dash.Dash(__name__, external_stylesheets=[
 ])
 app.title = "Umweltmonitoring Dashboard"
 
-# Holt historische Messdaten aus der Datenbank für einen Sensor
-
-def verlaufsdaten_aus_db(sensor_id, box_id=BOX_ID):
-    query = text("""
-        SELECT zeitstempel, messwert
-        FROM sensor_verlauf
-        WHERE sensor_id = :sensor_id AND box_id = :box_id
-        ORDER BY zeitstempel ASC
-    """)
-    with engine.connect() as conn:
-        df = pd.read_sql(query, conn, params={"sensor_id": sensor_id, "box_id": box_id})
-    return df
-
-# Erzeugt eine Karte mit einem Liniendiagramm zum Temperaturverlauf
-
-def verlaufsdiagramm_card(sensor_id):
-    df = verlaufsdaten_aus_db(sensor_id)
-
-    if df.empty:
-        fig = go.Figure()
-        fig.add_annotation(text="Keine Daten", x=0.5, y=0.5, showarrow=False)
-    else:
-        fig = px.line(df, x="zeitstempel", y="messwert", title="Temperaturverlauf (10 Tage)",
-                      labels={"zeitstempel": "Zeit", "messwert": "Temperatur (°C)"})
-        fig.update_layout(margin=dict(t=30, b=20, l=0, r=0), height=300)
-
-    return dbc.Card(
-        dbc.CardBody([
-            html.H5("📈 Temperatur Verlauf", className="card-title"),
-            dcc.Graph(figure=fig)
-        ]),
-        class_name="shadow-sm bg-light rounded"
-    )
 
 def temperatur_wochenkarte(forecast_min, forecast_max):
     cards = []
@@ -81,12 +55,22 @@ def temperatur_wochenkarte(forecast_min, forecast_max):
                 html.Div(f"{round(max_temp)}°", className="text-center fw-bold"),
                 html.Div(f"{round(min_temp)}°", className="text-center text-muted")
             ])
-        ], class_name="text-center shadow-sm bg-light", style={"width": "100px", "margin": "0 5px"})
+        ], class_name="text-center shadow-sm bg-light")
 
-        cards.append(card)
+            
+        card_wrapper = html.Div(card,style={"flex": "1 1 0","minWidth": "90px"})
+        cards.append(card_wrapper)
 
-    return html.Div(cards, style={"display": "flex", "justifyContent": "center", "gap": "10px"})
-
+    return html.Div(
+        cards,
+        style={
+            "display": "flex",
+            "justifyContent": "center",
+            "gap": "15px",                   
+            "flexWrap": "wrap",
+            "width": "100%",
+        }
+    )
 
 # Leere Karte für die spätere Anzeige der Prognose-Grafik
 def temperatur_prognose_card():
@@ -98,23 +82,75 @@ def temperatur_prognose_card():
         class_name="shadow-sm bg-light rounded"
     )
 
+def calculate_sun_times(lat=46.196912, lon=14.548932):
+    city = LocationInfo(
+        name="Moste",
+        region="Slovenia",
+        timezone="Europe/Ljubljana",
+        latitude=lat,
+        longitude=lon
+    )
+    timezone = pytz.timezone(city.timezone)
+    s = sun(city.observer, date=datetime.now(), tzinfo=timezone)
+    sunrise = s["sunrise"].strftime("%H:%M")
+    sunset = s["sunset"].strftime("%H:%M")
+    return sunrise, sunset
+
 def sensebox_info_card():
     box_info = box_info_holen()
-
+    df = daten_von_api_holen()
+    temp_df = df[df["einheit"] == "°C"]
+    letzter_temp = temp_df.sort_values("zeitstempel").iloc[-1]
+    last_update = letzter_temp["zeitstempel"]
+    sunrise, sunset = calculate_sun_times()
+    
     name = box_info["name"]
-    created_at = box_info["created_at"].strftime('%Y-%m-%d %H:%M') if box_info["created_at"] else "Unbekannt"
+    created_at = box_info["created_at"].replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Europe/Berlin")).strftime('%d-%m-%Y %H:%M')
     exposure = box_info["exposure"]
+    last_update = last_update.replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Europe/Berlin")).strftime('%d-%m-%Y %H:%M')
+
+    # 🎯 Mini-Karten (örnek içerikli)
+    mini_card_1 = dbc.Card(
+        dbc.CardBody([
+            html.Div(
+            html.I(className="bi bi-sunrise-fill", style={"fontSize": "3.6rem", "color": "#FF8C00"}),  # Bootstrap icon
+            className="mb-2"
+        ),
+        html.P(sunrise, className="card-text fw-bold", style={"fontSize": "1.47rem"})
+        ]),
+        class_name="bg-white shadow-sm text-center h-100"
+    )
+
+    mini_card_2 = dbc.Card(
+        dbc.CardBody([
+            html.Div(
+                html.I(className="bi bi-sunset-fill", style={"fontSize": "3.6rem"}),  # Turuncu ikon
+                className="mb-2"
+            ),
+            html.P(sunset, className="card-text fw-bold", style={"fontSize": "1.47rem"})
+        ]),
+        class_name="bg-white shadow-sm text-center h-100"
+    )
+
+    mini_cards_row = dbc.Row([
+        dbc.Col(mini_card_1, width=6, class_name="h-100"),
+        dbc.Col(mini_card_2, width=6, class_name="h-100")
+    ], class_name="mt-4 g-4 flex-grow-1 h-100")  # Üstten biraz boşluk
 
     return dbc.Card(
         dbc.CardBody([
-            html.H5(name, className="card-title"),
+            html.H5(name, className="card-title fw-bold", style={"fontSize": "4rem"}),
             html.Div([
-                html.P(f"Erstellt am: {created_at}", className="mb-1"),
-                html.P(f"Standorttyp: {exposure}", className="mb-0")
-            ], className="text-muted")
+                html.P("Erstellt am:", className="mb-0",style={"fontSize": "1.3rem"}),
+                html.P(created_at, className="mb-2"),
+                html.P("Standorttyp:", className="mb-0",style={"fontSize": "1.3rem"}),
+                html.P(exposure, className="mb-2"),
+                html.P("Letzte Aktualisierung:", className="mb-0",style={"fontSize": "1.3rem"}),
+                html.P(last_update, className="mb-0"),
+            ], className="text-muted"),
+            mini_cards_row  
         ]),
-        class_name="shadow-sm bg-light rounded",
-        style={"height": "150px"}
+        class_name="shadow-sm bg-light rounded"
     )
 
 
@@ -152,12 +188,23 @@ def nested_cards():
                     html.Div(
                         dbc.Card(
                             dbc.CardBody([
-                                html.H5("🌡️ Temperatur", className="card-title"),
-                                html.H2(id="live-temperature", className="text-center text-primary")
+                                html.H5([
+                                    html.I(className="bi bi-thermometer-half me-2"),
+                                    "Temperature"
+                                ], className="card-title mb-2"),
+                                daq.Thermometer(
+                                    id="temperature-thermometer",
+                                    min=-15,
+                                    max=50,
+                                    value=0,  # bu değer başlangıç, güncelleme sonra olacak
+                                    showCurrentValue=True,
+                                    color= "blue" ,             # Dolu kısmın rengi
+                                    style={"height": "220px"}
+                                )
                             ]),
                             class_name="shadow-sm bg-light w-100 h-100 rounded"
                         ),
-                        style={"flex": 2, "display": "flex"}
+                        style={"flex": 2, "display": "flex", "justifyContent": "center"}
                     ),
                     html.Div(
                         dbc.Card(
@@ -301,13 +348,20 @@ app.layout = dbc.Container([
     html.H1("Dashboard", className="display-4 mb-4 text-center fw-bold"),
 
     dbc.Row([
-        dbc.Col(sensebox_info_card(), md=4),
-        dbc.Col(nested_cards(), md=8),
-    ], class_name="mb-5"),
+        dbc.Col(
+            sensebox_info_card(), 
+            md=4, 
+            class_name="h-100"
+        ),
+        dbc.Col(
+            nested_cards(), 
+            md=8, 
+            class_name="h-100"
+        ),
+    ], class_name="mb-5 align-items-stretch"),
 
     dbc.Row([
-        dbc.Col(temperatur_prognose_card(), md=6),
-        dbc.Col(verlaufsdiagramm_card(SENSOR_ID), md=6),
+        dbc.Col(temperatur_prognose_card())#, md=6
     ], class_name="mb-4"),
 
     html.Div("Countdown", id="countdown", style={
@@ -352,19 +406,21 @@ def update_forecast_ui(_):
 
 # Holt aktuelle Temperaturdaten (alle 3 Minuten) und zeigt den letzten Wert an
 @app.callback(
-    Output("live-temperature", "children"),
+    Output("temperature-thermometer", "value"),
     Input("live-update", "n_intervals")
 )
-def update_live_temperature(_):
+def update_temperature_thermometer(_):
     df = daten_von_api_holen()
-    daten_in_datenbank_schreiben(df)
+    if df is None or df.empty:
+        return 0  # Verisiz durumda gösterilecek değer
 
     temp_df = df[df["einheit"] == "°C"]
     if temp_df.empty:
-        return "- °C"
+        return 0
 
     letzter_wert = temp_df.sort_values("zeitstempel").iloc[-1]["messwert"]
-    return f"{letzter_wert:.1f} °C"
+    return float(letzter_wert)
+
 
 @app.callback(
     Output("pressure-gauge", "figure"),
