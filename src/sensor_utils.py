@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from prophet import Prophet
 
 
-# Umgebungsvariablen (aus Docker Compose oder .env)
+# Umgebungsvariablen für die Datenbankverbindung
 DB_USER = os.getenv("DB_USER", "gruppeeins")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "mypassword")
 DB_HOST = os.getenv("DB_HOST", "db")
@@ -20,6 +20,7 @@ SENSEBOX_ID = os.getenv("SENSEBOX_ID", "67a661af4ef45d0008682744")
 db_url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 engine = create_engine(db_url)
 
+# Funktion zum Abrufen der aktuellen Sensordaten von der OpenSenseMap API
 def daten_von_api_holen(box_id=SENSEBOX_ID):
     """
     Holt aktuelle Sensordaten von der OpenSenseMap API.
@@ -57,6 +58,7 @@ def daten_von_api_holen(box_id=SENSEBOX_ID):
 
     return df_umgewandelt
 
+# Funktion zum Schreiben der Sensordaten in die Datenbank
 def daten_in_datenbank_schreiben(df, box_id=SENSEBOX_ID):
     """
     Schreibt die verarbeiteten Sensordaten in die Datenbank (vermeidet Duplikate).
@@ -86,7 +88,7 @@ def daten_in_datenbank_schreiben(df, box_id=SENSEBOX_ID):
                 "icon": zeile["icon"]
             })
 
-
+# Funktion zum Abrufen historischer Verlaufsdaten eines Sensors
 def verlauf_daten_von_api_holen(sensor_id, box_id=SENSEBOX_ID, tage=7):
     """
     Holt historische Messwerte eines Sensors basierend auf dem letzten Messzeitpunkt,
@@ -134,7 +136,7 @@ def verlauf_daten_von_api_holen(sensor_id, box_id=SENSEBOX_ID, tage=7):
 
     return df
 
-
+# Funktion zum Schreiben historischer Verlaufsdaten in die Datenbank
 def verlauf_in_datenbank_schreiben(df):
     """
     Schreibt historische Verlaufsdaten in die Datenbank-Tabelle 'sensor_verlauf'.
@@ -159,19 +161,33 @@ def verlauf_in_datenbank_schreiben(df):
                 "messwert": zeile["messwert"]
             })
 
-
-def fetch_daily_min_max(sensor_id, box_id=SENSEBOX_ID):
-    query = text("""
-        SELECT zeitstempel::date AS datum, MIN(messwert) as min_val, MAX(messwert) as max_val
+# Funktion zum Abrufen täglicher Wetterdaten (Temperatur und Regen)
+def fetch_daily_weather_data(temp_sensor_id, rain_sensor_id, box_id=SENSEBOX_ID):
+    query_temp = text("""
+        SELECT zeitstempel::date AS datum, 
+               MIN(messwert) as min_val, 
+               MAX(messwert) as max_val
         FROM sensor_verlauf
         WHERE sensor_id = :sensor_id AND box_id = :box_id 
         GROUP BY datum
-        ORDER BY datum ASC
     """)
+
+    query_rain = text("""
+        SELECT zeitstempel::date AS datum, 
+               AVG(messwert) as rain_avg
+        FROM sensor_verlauf
+        WHERE sensor_id = :sensor_id AND box_id = :box_id 
+        GROUP BY datum
+    """)
+
     with engine.connect() as conn:
-        df = pd.read_sql(query, conn, params={"sensor_id": sensor_id, "box_id": box_id})
+        df_temp = pd.read_sql(query_temp, conn, params={"sensor_id": temp_sensor_id, "box_id": box_id})
+        df_rain = pd.read_sql(query_rain, conn, params={"sensor_id": rain_sensor_id, "box_id": box_id})
+
+    df = pd.merge(df_temp, df_rain, on='datum', how='inner')
     return df
 
+# Funktion zum Erstellen einer Wetterprognose mit Prophet
 def create_forecast(df, value_column='min_val', days_ahead=7):
     df_prophet = df[['datum', value_column]].rename(columns={'datum': 'ds', value_column: 'y'})
     df_prophet.dropna(inplace=True)
@@ -185,6 +201,7 @@ def create_forecast(df, value_column='min_val', days_ahead=7):
     return forecast[['ds', 'yhat']].tail(days_ahead)
 
 
+# Funktion zum Abrufen allgemeiner Box-Informationen
 def box_info_holen(box_id = SENSEBOX_ID):
     """
     Holt allgemeine Informationen zur SenseBox (Name, createdAt, exposure).

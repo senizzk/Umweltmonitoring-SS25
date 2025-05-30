@@ -1,0 +1,28 @@
+body {
+    background-image: url("/assets/background.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center center;
+    margin: 0;
+    padding: 0;
+}
+
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+h5, h4, h3, h2 {
+    font-weight: 600; /* Semi-bold */
+    font-family: 'Montserrat', sans-serif;
+}
+
+.fw-bold, .fw-semibold, .fw-normal {
+    font-family: 'Montserrat', sans-serif !important;
+}

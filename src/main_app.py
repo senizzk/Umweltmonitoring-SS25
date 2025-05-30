@@ -8,11 +8,11 @@ import math
 from sensor_utils import (
     daten_von_api_holen,
     daten_in_datenbank_schreiben,
-    fetch_daily_min_max,
     create_forecast,
     verlauf_daten_von_api_holen,
     verlauf_in_datenbank_schreiben,
-    box_info_holen)
+    box_info_holen,
+    fetch_daily_weather_data) 
 import os
 from sqlalchemy import create_engine, text
 import dash_daq as daq
@@ -23,42 +23,66 @@ from datetime import datetime
 import pytz
 
 
-# Verbindung zur Datenbank
+# Verbindung zur Datenbank herstellen
 DB_URL = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
 engine = create_engine(DB_URL)
 
-# SenseBox-ID
+# SenseBox-ID aus Umgebungsvariable
 BOX_ID = os.getenv("SENSEBOX_ID")
-SENSOR_ID = "67a661af4ef45d0008682745"
 
-# Dash App mit Montserrat-Font
+# Sensor-IDs definieren
+TEMP_SENSOR_ID = "67a661af4ef45d0008682745"  # Temperatur-Sensor-ID
+RAIN_SENSOR_ID = "67a7ab164ef45d00089ef795"  # Regen-Sensor-ID
+
+# Dash-App initialisieren mit Bootstrap-Theme und Google Fonts (Montserrat)
 app = dash.Dash(__name__, external_stylesheets=[
-    dbc.themes.BOOTSTRAP,
-    "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap",
-    "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    dbc.themes.BOOTSTRAP,  # Bootstrap CSS für Layout und Komponenten
+    "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap",  # Montserrat Schriftart
+    "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"  # Bootstrap Icons laden
 ])
+
 app.title = "Umweltmonitoring Dashboard"
 
+# ============================================
 
-def temperatur_wochenkarte(forecast_min, forecast_max):
+# Hilfsfunktion, um das passende Regen-Icon basierend auf der Regenmenge zu erhalten
+def get_rain_icon(rain_mm):
+    if rain_mm < 0.2:
+        return html.I(className="bi bi-sun", style={"fontSize": "1.8rem", "color": "#f7c948"})
+    elif rain_mm < 2:
+        return html.I(className="bi bi-cloud-sun", style={"fontSize": "1.8rem", "color": "#f0ad4e"})
+    elif rain_mm < 5:
+        return html.I(className="bi bi-cloud-drizzle", style={"fontSize": "1.8rem", "color": "#17a2b8"})
+    elif rain_mm < 10:
+        return html.I(className="bi bi-cloud-rain", style={"fontSize": "1.8rem", "color": "#0d6efd"})
+    elif rain_mm < 20:
+        return html.I(className="bi bi-cloud-rain-heavy", style={"fontSize": "1.8rem", "color": "#0d6efd"})
+    else:
+        return html.I(className="bi bi-cloud-lightning-rain", style={"fontSize": "1.8rem", "color": "#280452"})
+
+
+# Erzeugt eine Wochenkarte mit Temperatur- und Regenprognosen
+def temperatur_wochenkarte(forecast_min, forecast_max, forecast_rain):
     cards = []
 
     for i in range(len(forecast_min)):
-        day = pd.to_datetime(forecast_min['ds'].iloc[i]).strftime('%a')  # 'Mon', 'Tue' ...
+        day = pd.to_datetime(forecast_min['ds'].iloc[i]).strftime('%A')
         min_temp = forecast_min['yhat'].iloc[i]
         max_temp = forecast_max['yhat'].iloc[i]
+        rain = forecast_rain['yhat'].iloc[i]
+
+        rain_icon = get_rain_icon(rain)
 
         card = dbc.Card([
             dbc.CardBody([
-                html.Div(day, className="fw-bold text-center"),
-                html.Div("🌦️", className="fs-3 text-center"),  # Hava durumu ikonu (istersen değiştirilebilir)
-                html.Div(f"{round(max_temp)}°", className="text-center fw-bold"),
-                html.Div(f"{round(min_temp)}°", className="text-center text-muted")
+                html.Div(day, className="fw-bold text-center", style={"fontSize": "1.4rem"}),
+                html.Div(rain_icon, className="fs-4 text-center"),
+                html.Div(f"{round(max_temp)}°", className="text-center fw-bold", style={"fontSize": "1.3rem"}),
+                html.Div(f"{round(min_temp)}°", className="text-center text-muted", style={"fontSize": "1.2rem"})
             ])
-        ], class_name="text-center shadow-sm bg-light")
+        ], class_name="text-center glass-card w-100 h-100")
 
-            
-        card_wrapper = html.Div(card,style={"flex": "1 1 0","minWidth": "90px"})
+        card_wrapper = html.Div(card, style={"flex": "1 1 0", "minWidth": "90px"})
         cards.append(card_wrapper)
 
     return html.Div(
@@ -66,22 +90,24 @@ def temperatur_wochenkarte(forecast_min, forecast_max):
         style={
             "display": "flex",
             "justifyContent": "center",
-            "gap": "15px",                   
+            "gap": "15px",
             "flexWrap": "wrap",
             "width": "100%",
         }
     )
 
+
 # Leere Karte für die spätere Anzeige der Prognose-Grafik
 def temperatur_prognose_card():
     return dbc.Card(
         dbc.CardBody([
-            html.H5("📆 7-Tage-Temperaturvorhersage", className="card-title"),
+            html.H5("7-Day Weather Forecast", className="card-title"),
             html.Div(id="forecast-graph")
         ]),
-        class_name="shadow-sm bg-light rounded"
+        class_name="glass-card w-100 h-100"
     )
 
+# Berechnet Sonnenaufgang und -untergang für Moste, Slowenien
 def calculate_sun_times(lat=46.196912, lon=14.548932):
     city = LocationInfo(
         name="Moste",
@@ -96,6 +122,7 @@ def calculate_sun_times(lat=46.196912, lon=14.548932):
     sunset = s["sunset"].strftime("%H:%M")
     return sunrise, sunset
 
+# SenseBox-Info-Karte mit allgemeinen Informationen und Sonnenzeiten
 def sensebox_info_card():
     box_info = box_info_holen()
     df = daten_von_api_holen()
@@ -109,65 +136,65 @@ def sensebox_info_card():
     exposure = box_info["exposure"]
     last_update = last_update.replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Europe/Berlin")).strftime('%d-%m-%Y %H:%M')
 
-    # 🎯 Mini-Karten (örnek içerikli)
+    # Erzeugt die Mini-Karten für Sonnenaufgang und -untergang
     mini_card_1 = dbc.Card(
         dbc.CardBody([
             html.Div(
-            html.I(className="bi bi-sunrise-fill", style={"fontSize": "3.6rem", "color": "#FF8C00"}),  # Bootstrap icon
-            className="mb-2"
+            html.I(className="bi bi-sunrise-fill", style={"fontSize": "3.6rem", "color": "#FF8C00"}),  
+            className="d-flex flex-column justify-content-center align-items-center"
         ),
-        html.P(sunrise, className="card-text fw-bold", style={"fontSize": "1.47rem"})
+        html.P(sunrise, className="card-text fw-bold text-center", style={"fontSize": "1.47rem"})
         ]),
-        class_name="bg-white shadow-sm text-center h-100"
+        class_name="glass-card w-100 h-100"
     )
 
     mini_card_2 = dbc.Card(
         dbc.CardBody([
             html.Div(
-                html.I(className="bi bi-sunset-fill", style={"fontSize": "3.6rem"}),  # Turuncu ikon
-                className="mb-2"
+                html.I(className="bi bi-sunset-fill", style={"fontSize": "3.6rem"}), 
+                className="d-flex flex-column justify-content-center align-items-center"
             ),
-            html.P(sunset, className="card-text fw-bold", style={"fontSize": "1.47rem"})
+            html.P(sunset, className="card-text fw-bold text-center", style={"fontSize": "1.47rem"})
         ]),
-        class_name="bg-white shadow-sm text-center h-100"
+        class_name="glass-card w-100 h-100"
     )
 
     mini_cards_row = dbc.Row([
         dbc.Col(mini_card_1, width=6, class_name="h-100"),
         dbc.Col(mini_card_2, width=6, class_name="h-100")
-    ], class_name="mt-4 g-4 flex-grow-1 h-100")  # Üstten biraz boşluk
+    ], class_name="mt-2 g-1 flex-grow-1 h-100")  
 
     return dbc.Card(
         dbc.CardBody([
             html.H5(name, className="card-title fw-bold", style={"fontSize": "4rem"}),
             html.Div([
-                html.P("Erstellt am:", className="mb-0",style={"fontSize": "1.3rem"}),
+                html.P("Created on:", className="mb-0",style={"fontSize": "1.3rem"}),
                 html.P(created_at, className="mb-2"),
-                html.P("Standorttyp:", className="mb-0",style={"fontSize": "1.3rem"}),
+                html.P("Location type:", className="mb-0",style={"fontSize": "1.3rem"}),
                 html.P(exposure, className="mb-2"),
-                html.P("Letzte Aktualisierung:", className="mb-0",style={"fontSize": "1.3rem"}),
+                html.P("Last updated:", className="mb-0",style={"fontSize": "1.3rem"}),
                 html.P(last_update, className="mb-0"),
             ], className="text-muted"),
             mini_cards_row  
         ]),
-        class_name="shadow-sm bg-light rounded"
+        class_name="glass-card w-100 h-100"
     )
 
 
-# Platzhalter-Karte für leere Bereiche im Layout
+# Platzhalter-Karte für leere Bereiche
 def placeholder_card(text="Platzhalter-Karte"):
     return dbc.Card(
         dbc.CardBody(html.Div(text, className="text-center text-muted fs-5")),
-        class_name="shadow-sm rounded bg-light",
+        class_name="glass-card w-100 h-100",
         style={"height": "150px"}
     )
 
-# Flex-Karte für verschachtelte Layouts
+# Erzeugt eine flexible Karte, die in einem flexiblen Layout verwendet werden kann
 def flex_card(text, flex=1):
     return html.Div(
         dbc.Card(
             dbc.CardBody(text, className="text-center text-muted fw-semibold"),
-            class_name="shadow-sm bg-light w-100 h-100 rounded"
+            class_name="glass-card w-100 h-100"
         ),
             style={
             "flex": flex,
@@ -178,11 +205,11 @@ def flex_card(text, flex=1):
         }
     )
 
-# Erzeugt ein Layout mit mehreren kleinen Karten nebeneinander
+# Erzeugt eine Karte mit mehreren Karten für verschiedene Sensoren
 def nested_cards():
     return dbc.Card(
         dbc.CardBody([
-            html.Div("Today's Highlight", className="text-muted fs-5 fw-semibold text-center mb-3"),
+            html.Div("Today's Highlight", className="fw-semibold text-center"),
             dbc.Row([
                 dbc.Col([
                     html.Div(
@@ -191,30 +218,61 @@ def nested_cards():
                                 html.H5([
                                     html.I(className="bi bi-thermometer-half me-2"),
                                     "Temperature"
-                                ], className="card-title mb-2"),
-                                daq.Thermometer(
-                                    id="temperature-thermometer",
-                                    min=-15,
-                                    max=50,
-                                    value=0,  # bu değer başlangıç, güncelleme sonra olacak
-                                    showCurrentValue=True,
-                                    color= "blue" ,             # Dolu kısmın rengi
-                                    style={"height": "220px"}
-                                )
-                            ]),
-                            class_name="shadow-sm bg-light w-100 h-100 rounded"
+                                ], className="card-title mb-3"),
+                                html.Div([
+                                    daq.Thermometer(
+                                        id="temperature-thermometer",
+                                        min=-15,
+                                        max=50,
+                                        value=0,
+                                        showCurrentValue=False,
+                                        color="black"
+                                    ),
+                                    html.Div(
+                                        id="temperature-display",
+                                        style={
+                                            "fontSize": "2rem",
+                                            "marginLeft": "20px",
+                                            "fontWeight": "bold",
+                                            "color": "black",
+                                            "alignItems": "center"
+                                       }
+                                    )
+                                ],
+                                style={
+                                    "display": "flex",
+                                    "justifyContent": "center",
+                                    "alignItems": "center",
+                                })
+                            ],
+                            style={    
+                                "minHeight": "300px",        
+                                "overflow": "hidden"
+                            }),
+                            class_name="glass-card w-100 h-100"
                         ),
-                        style={"flex": 2, "display": "flex", "justifyContent": "center"}
+                        style={"flex": 3, "display": "flex", "justifyContent": "center"}
                     ),
+
                     html.Div(
                         dbc.Card(
                             dbc.CardBody([
-                                html.H5("🌧️ Regen", className="card-title"),
-                                html.H2(id="rain-value", className="text-center text-primary")
+                                html.H5([
+                                html.I(className="bi bi-cloud-rain-fill me-2", style={"color": "black"}),  
+                                "Rain"
+                            ], className="card-title"),
+
+                                html.H2(id="rain-value", className="text-center",
+                                            style={
+                                                "fontSize": "2rem",
+                                                "marginLeft": "20px",
+                                                "fontWeight": "bold",
+                                                "color": "black"
+                                            })
                             ]),
-                            class_name="shadow-sm bg-light w-100 h-100 rounded"
+                            class_name="glass-card w-100 h-100"
                         ),
-                        style={"flex": 1, "display": "flex"}
+                        style={"flex": 2, "display": "flex"}
                     ),
                 ], width=4, style={"display": "flex", "flexDirection": "column", "gap": "0.5rem"}),
                 dbc.Col([
@@ -225,21 +283,30 @@ def nested_cards():
                                     html.I(className="bi bi-wind me-2"),
                                     "Wind"
                                 ], className="card-title mb-2"),
-                                dcc.Graph(id="wind-arrow", config={"displayModeBar": False}, style={"height": "220px"})
+                                dcc.Graph(id="wind-arrow", config={"displayModeBar": False}, style={"height": "235px"})
                             ]),
-                            class_name="shadow-sm bg-light w-100 h-100 rounded"
+                            class_name="glass-card w-100 h-100"
                         ),
-                        style={"flex": 2, "display": "flex"}
+                        style={"flex": 3, "display": "flex"}
                     ),
                     html.Div(
                         dbc.Card(
                             dbc.CardBody([
-                                html.H5("💧 Luftfeuchtigkeit", className="card-title"),
-                                html.H2(id="humidity-value", className="text-center text-primary")
+                                html.H5([
+                                html.I(className="bi bi-droplet me-2", style={"color": "black"}),  
+                                "Humidity"
                             ]),
-                            class_name="shadow-sm bg-light w-100 h-100 rounded"
+                                html.H2(id="humidity-value", className="text-center",
+                                            style={
+                                                "fontSize": "2rem",
+                                                "marginLeft": "20px",
+                                                "fontWeight": "bold",
+                                                "color": "black"
+                                            })
+                            ]),
+                            class_name="glass-card w-100 h-100"
                         ),
-                        style={"flex": 1, "display": "flex"}
+                        style={"flex": 3, "display": "flex"}
                     )
                 ], width=4, style={"display": "flex", "flexDirection": "column", "gap": "0.5rem"}),
                 dbc.Col([
@@ -250,17 +317,18 @@ def nested_cards():
                                     html.I(className="bi bi-speedometer2 me-2"),
                                     "Pressure"
                                 ], className="card-title mb-2"),
-                                dcc.Graph(id="pressure-gauge", config={"displayModeBar": False})
+                                dcc.Graph(id="pressure-gauge", config={"displayModeBar": False} , style={"height": "235px"}) 
                 ]),
-                            class_name="shadow-sm bg-light w-100 h-100 rounded"
+                            class_name="glass-card w-100 h-100"
                         ),
-                        style={"flex": 2, "display": "flex"}
+                        style={"flex": 3, "display": "flex"}
                     ),
                     html.Div(
-                        dbc.Card(
-                            dbc.CardBody([
-                                html.Div([
-                                    html.Label("Particulate Type", className="fw-semibold mb-1"),
+                    dbc.Card(
+                        dbc.CardBody([ 
+                            dbc.Row([
+                                dbc.Col(html.H5("Particulate Type", className="card-title"), width="auto"),	
+                                dbc.Col(
                                     dcc.RadioItems(
                                         id="pm-selector",
                                         options=[
@@ -270,43 +338,52 @@ def nested_cards():
                                         value="2.5",
                                         inline=True,
                                         inputStyle={"margin-right": "6px", "margin-left": "10px"}
-                                    )
-                                ], className="mb-3"),
-                                html.Div(id="pm-value-display", className="fs-4 text-center fw-bold text-primary")
-                            ]),
-                            class_name="shadow-sm bg-light w-100 h-100 rounded"
-                        ),
-                        style={"flex": 1, "display": "flex"}
-                    )
+                                    ),
+                                    width="auto"
+                                )
+                            ], className="align-items-center mb-2"),
 
-
-                ], width=4, style={"display": "flex", "flexDirection": "column", "gap": "0.5rem"}),
+                            html.Div(id="pm-value-display", className="text-center",
+                                style={
+                                    "fontSize": "2rem",
+                                    "marginLeft": "20px",
+                                    "fontWeight": "bold",
+                                    "color": "black"
+                                })
+                        ]),
+                        class_name="glass-card w-100 h-100"
+                    ),
+                    style={"flex": 2, "display": "flex"}
+                )], width=4, style={"display": "flex", "flexDirection": "column", "gap": "0.5rem"}),
             ], class_name="g-2")
-        ])
+        ]), class_name="glass-card w-100 h-100"
     )
 
+# ============================================
+
+# Erzeugt ein Druckmessgerät (Gauge) für die Anzeige des Luftdrucks
 def pressure_gauge_figure(pressure_value):
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=pressure_value,
-        number={"suffix": "Pa", "font": {"size": 24}},
+        number={"suffix": "Pa", "font": {"size": 24, "color": "black", "family": "Montserrat, sans-serif"}},
         gauge={
             'axis': {'range': [90000, 110000], 'tickwidth': 1, 'tickcolor': "gray"},
-            'bar': {'color': "royalblue"},
+            'bar': {'color': "black"},
             'borderwidth': 1
         },
         domain={'x': [0, 1], 'y': [0, 1]}
     ))
 
     fig.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",  # ❗ Grafiğin dış kutusu saydam
-        plot_bgcolor="rgba(0,0,0,0)",   # ❗ İç alan (grafik arkası) da saydam
+        paper_bgcolor="rgba(0,0,0,0)",  
+        plot_bgcolor="rgba(0,0,0,0)", 
         margin=dict(t=30, b=30, l=30, r=30),
         height=220
     )
     return fig
 
-
+# Erzeugt ein Windrose-Diagramm mit einem Pfeil, der die Windrichtung und -geschwindigkeit anzeigt
 def wind_arrow_rose_chart(direction_deg, speed_kmh):
     fig = go.Figure()
 
@@ -314,7 +391,7 @@ def wind_arrow_rose_chart(direction_deg, speed_kmh):
         r=[speed_kmh],
         theta=[direction_deg],
         name=f"{speed_kmh:.1f} km/h",
-        marker_color='skyblue',
+        marker_color='black',
         opacity=0.8
     ))
 
@@ -339,7 +416,7 @@ def wind_arrow_rose_chart(direction_deg, speed_kmh):
     return fig
 
 
-# 🔧 Gesamtlayout der Seite mit Intervallen für Live-Updates und Modelltraining
+# Gesamtlayout der Seite mit Intervallen für Live-Updates und Modelltraining
 app.layout = dbc.Container([
     dcc.Interval(id="daily-model-update", interval=86400 * 1000, n_intervals=0),  # Modell-Update täglich
     dcc.Interval(id="countdown-timer", interval=1000, n_intervals=0),   # Countdown jede Sekunde
@@ -361,7 +438,7 @@ app.layout = dbc.Container([
     ], class_name="mb-5 align-items-stretch"),
 
     dbc.Row([
-        dbc.Col(temperatur_prognose_card())#, md=6
+        dbc.Col(temperatur_prognose_card())
     ], class_name="mb-4"),
 
     html.Div("Countdown", id="countdown", style={
@@ -388,40 +465,47 @@ def countdown_timer_render(n_intervals_count, _):
     sekunden = verbleibend % 60
     return f"Nächste Aktualisierung in: {minuten:02}:{sekunden:02}"
 
-# Führt tägliches Training des Vorhersagemodells aus und zeigt die Prognosegrafik
+# Aktualisiert die Prognose-Grafik täglich
 @app.callback(
     Output("forecast-graph", "children"),
     Input("daily-model-update", "n_intervals")
 )
 def update_forecast_ui(_):
-    verlauf_df = verlauf_daten_von_api_holen(SENSOR_ID)
+    verlauf_df = verlauf_daten_von_api_holen(TEMP_SENSOR_ID)  # Temperaturverlauf
     verlauf_in_datenbank_schreiben(verlauf_df)
 
-    df = fetch_daily_min_max(SENSOR_ID)
+    verlauf_df_rain = verlauf_daten_von_api_holen(RAIN_SENSOR_ID)  # Regenverlauf
+    verlauf_in_datenbank_schreiben(verlauf_df_rain)
+
+    df = fetch_daily_weather_data(TEMP_SENSOR_ID, RAIN_SENSOR_ID)
+
     forecast_min = create_forecast(df, 'min_val')
     forecast_max = create_forecast(df, 'max_val')
+    forecast_rain = create_forecast(df, 'rain_avg')
 
-    return temperatur_wochenkarte(forecast_min, forecast_max)
+    return temperatur_wochenkarte(forecast_min, forecast_max, forecast_rain)
 
 
 # Holt aktuelle Temperaturdaten (alle 3 Minuten) und zeigt den letzten Wert an
 @app.callback(
     Output("temperature-thermometer", "value"),
+    Output("temperature-display", "children"),
     Input("live-update", "n_intervals")
 )
 def update_temperature_thermometer(_):
     df = daten_von_api_holen()
     if df is None or df.empty:
-        return 0  # Verisiz durumda gösterilecek değer
+        return 0, "0°C"
 
     temp_df = df[df["einheit"] == "°C"]
     if temp_df.empty:
-        return 0
+        return 0, "0°C"
 
-    letzter_wert = temp_df.sort_values("zeitstempel").iloc[-1]["messwert"]
-    return float(letzter_wert)
+    letzter_wert = float(temp_df.sort_values("zeitstempel").iloc[-1]["messwert"])
+    return letzter_wert, f"{letzter_wert:.1f}°C"
 
 
+# Aktualisiert das Druckmessgerät (Gauge) mit den letzten Druckdaten
 @app.callback(
     Output("pressure-gauge", "figure"),
     Input("live-update", "n_intervals")
@@ -439,6 +523,7 @@ def update_pressure_gauge(_):
     last_value = pressure_df.sort_values("zeitstempel").iloc[-1]["messwert"]
     return pressure_gauge_figure(last_value)
 
+# Aktualisiert die PM2.5 und PM10 Werte basierend auf der Auswahl im Dropdown
 @app.callback(
     Output("pm-value-display", "children"),
     Input("pm-selector", "value"),
@@ -457,7 +542,7 @@ def update_pm_value(pm_type, _):
 
     sensor_id = pm_ids[pm_type]
 
-    # Sadece µg/m³ olanları al, sonra doğru ID'yi filtrele
+    
     df_filtered = df[df["einheit"] == "µg/m³"]
     pm_df = df_filtered[df_filtered["sensor_id"] == sensor_id]
 
@@ -465,8 +550,9 @@ def update_pm_value(pm_type, _):
         return f"Keine PM{pm_type} Daten"
 
     wert = float(pm_df.sort_values("zeitstempel").iloc[-1]["messwert"])
-    return f"PM{pm_type}: {wert:.1f} µg/m³"
+    return f"{wert:.1f} µg/m³"
 
+# Aktualisiert die Regenmenge und zeigt das passende Icon an
 @app.callback(
     Output("rain-value", "children"),
     Input("live-update", "n_intervals")
@@ -483,6 +569,7 @@ def update_rain_value(_):
     latest = rain_df.sort_values("zeitstempel").iloc[-1]["messwert"]
     return f"{latest:.1f} mm"
 
+# Aktualisiert die Luftfeuchtigkeit und zeigt den letzten Wert an
 @app.callback(
     Output("humidity-value", "children"),
     Input("live-update", "n_intervals")
@@ -499,6 +586,7 @@ def update_humidity_value(_):
     latest = humidity_df.sort_values("zeitstempel").iloc[-1]["messwert"]
     return f"{latest:.0f} %"
 
+# Aktualisiert die Windrose mit dem aktuellen Windrichtung und -geschwindigkeit
 @app.callback(
     Output("wind-arrow", "figure"),
     Input("live-update", "n_intervals")
@@ -518,9 +606,6 @@ def update_wind_arrow(_):
     direction = float(dir_df.sort_values("zeitstempel").iloc[-1]["messwert"])
 
     return wind_arrow_rose_chart(direction, speed)  
-
-
-
 
 
 # Startet den Dash-Server
