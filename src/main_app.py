@@ -37,7 +37,6 @@ RAIN_SENSOR_ID = "67a7ab164ef45d00089ef795"  # Regen-Sensor-ID
 # Dash-App initialisieren mit Bootstrap-Theme und Google Fonts (Montserrat)
 app = dash.Dash(__name__, external_stylesheets=[
     dbc.themes.BOOTSTRAP,  # Bootstrap CSS für Layout und Komponenten
-    "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap",  # Montserrat Schriftart
     "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"  # Bootstrap Icons laden
 ])
 
