@@ -143,7 +143,7 @@ def sensebox_info_card():
             html.I(className="bi bi-sunrise-fill", style={"fontSize": "3.6rem", "color": "#FF8C00"}),  
             className="d-flex flex-column justify-content-center align-items-center"
         ),
-        html.P(sunrise, className="card-text fw-bold text-center", style={"fontSize": "1.47rem"})
+        html.P(sunrise, className="card-text fw-bold text-center", style={"fontSize": "1.8rem"})
         ]),
         class_name="glass-card w-100 h-100"
     )
@@ -154,7 +154,7 @@ def sensebox_info_card():
                 html.I(className="bi bi-sunset-fill", style={"fontSize": "3.6rem"}), 
                 className="d-flex flex-column justify-content-center align-items-center"
             ),
-            html.P(sunset, className="card-text fw-bold text-center", style={"fontSize": "1.47rem"})
+            html.P(sunset, className="card-text fw-bold text-center", style={"fontSize": "1.8rem"})
         ]),
         class_name="glass-card w-100 h-100"
     )
@@ -162,7 +162,7 @@ def sensebox_info_card():
     mini_cards_row = dbc.Row([
         dbc.Col(mini_card_1, width=6, class_name="h-100"),
         dbc.Col(mini_card_2, width=6, class_name="h-100")
-    ], class_name="mt-2 g-1 flex-grow-1 h-100")  
+    ], class_name="mt-4 g-1 flex-grow-1 h-100")  
 
     return dbc.Card(
         dbc.CardBody([
@@ -226,16 +226,24 @@ def nested_cards():
                                         max=50,
                                         value=0,
                                         showCurrentValue=False,
-                                        color="black"
+                                        color="black",
+                                        style={
+                                        "position": "absolute",
+                                        "top": "50%",
+                                        "left": "40%",
+                                        "transform": "translate(-50%, -50%)",
+                                    }
                                     ),
                                     html.Div(
                                         id="temperature-display",
                                         style={
                                             "fontSize": "2rem",
                                             "marginLeft": "20px",
-                                            "fontWeight": "bold",
                                             "color": "black",
-                                            "alignItems": "center"
+                                            "position": "absolute",
+                                            "top": "52%",
+                                            "left": "60%",
+                                            "transform": "translate(-50%, -50%)"
                                        }
                                     )
                                 ],
@@ -266,8 +274,8 @@ def nested_cards():
                                             style={
                                                 "fontSize": "2rem",
                                                 "marginLeft": "20px",
-                                                "fontWeight": "bold",
-                                                "color": "black"
+                                                "color": "black",
+                                                "marginTop": "19px"
                                             })
                             ]),
                             class_name="glass-card w-100 h-100"
@@ -280,15 +288,36 @@ def nested_cards():
                         dbc.Card(
                             dbc.CardBody([
                                 html.H5([
-                                    html.I(className="bi bi-wind me-2"),
-                                    "Wind"
-                                ], className="card-title mb-2"),
-                                dcc.Graph(id="wind-arrow", config={"displayModeBar": False}, style={"height": "235px"})
+                                    html.I(className="bi bi-wind me-2", style={"color": "black"}),
+                                    "Wind Speed"
+                                ], className="card-title mb-3"),
+
+                                html.Div(
+                                    daq.Gauge(
+                                        id="wind-gauge",
+                                        min=0,
+                                        max=40,
+                                        value=0,
+                                        color="black",
+                                        showCurrentValue=True,
+                                        units="km/h",
+                                        size=220 
+                                    ),
+                                    style={
+                                        "position": "absolute",
+                                        "top": "65%",
+                                        "left": "50%",
+                                        "transform": "translate(-50%, -50%)",
+                                        "zIndex": 1      
+                                    }
+                                ),
+                                html.Div(style={"height": "227px"})  
                             ]),
-                            class_name="glass-card w-100 h-100"
+                            class_name="glass-card w-100 h-100 position-relative"
                         ),
-                        style={"flex": 3, "display": "flex"}
+                        style={"flex": 1, "display": "flex", "justifyContent": "center"}
                     ),
+
                     html.Div(
                         dbc.Card(
                             dbc.CardBody([
@@ -300,8 +329,9 @@ def nested_cards():
                                             style={
                                                 "fontSize": "2rem",
                                                 "marginLeft": "20px",
-                                                "fontWeight": "bold",
-                                                "color": "black"
+                                                "color": "black",
+                                                "marginTop": "19px"
+
                                             })
                             ]),
                             class_name="glass-card w-100 h-100"
@@ -317,7 +347,8 @@ def nested_cards():
                                     html.I(className="bi bi-speedometer2 me-2"),
                                     "Pressure"
                                 ], className="card-title mb-2"),
-                                dcc.Graph(id="pressure-gauge", config={"displayModeBar": False} , style={"height": "235px"}) 
+                                dcc.Graph(id="pressure-gauge", config={"displayModeBar": False} , 
+                                          style={"height": "235px"}) 
                 ]),
                             class_name="glass-card w-100 h-100"
                         ),
@@ -347,7 +378,6 @@ def nested_cards():
                                 style={
                                     "fontSize": "2rem",
                                     "marginLeft": "20px",
-                                    "fontWeight": "bold",
                                     "color": "black"
                                 })
                         ]),
@@ -366,55 +396,24 @@ def pressure_gauge_figure(pressure_value):
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=pressure_value,
-        number={"suffix": "Pa", "font": {"size": 24, "color": "black", "family": "Montserrat, sans-serif"}},
+        number={"suffix": "Pa", "font": {"size": 32, "color": "black", "family": "sans-serif"}},
         gauge={
             'axis': {'range': [90000, 110000], 'tickwidth': 1, 'tickcolor': "gray"},
             'bar': {'color': "black"},
-            'borderwidth': 1
+            'borderwidth': 0,
+            'bgcolor': "rgb(230, 230, 230)",
         },
         domain={'x': [0, 1], 'y': [0, 1]}
     ))
 
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",  
-        plot_bgcolor="rgba(0,0,0,0)", 
-        margin=dict(t=30, b=30, l=30, r=30),
+        margin=dict(t=50, b=40, l=30, r=30),
         height=220
     )
     return fig
 
-# Erzeugt ein Windrose-Diagramm mit einem Pfeil, der die Windrichtung und -geschwindigkeit anzeigt
-def wind_arrow_rose_chart(direction_deg, speed_kmh):
-    fig = go.Figure()
-
-    fig.add_trace(go.Barpolar(
-        r=[speed_kmh],
-        theta=[direction_deg],
-        name=f"{speed_kmh:.1f} km/h",
-        marker_color='black',
-        opacity=0.8
-    ))
-
-    fig.update_layout(
-        template=None,
-        polar=dict(
-            radialaxis=dict(range=[0, max(10, speed_kmh + 2)], showticklabels=True, ticks='', angle=45),
-            angularaxis=dict(
-                rotation=90,
-                direction="clockwise",
-                tickmode='array',
-                tickvals=[0, 45, 90, 135, 180, 225, 270, 315],
-                ticktext=["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-            )
-        ),
-        showlegend=False,
-        margin=dict(t=20, b=20, l=20, r=20),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)"
-    )
-
-    return fig
-
+# ============================================
 
 # Gesamtlayout der Seite mit Intervallen für Live-Updates und Modelltraining
 app.layout = dbc.Container([
@@ -588,24 +587,23 @@ def update_humidity_value(_):
 
 # Aktualisiert die Windrose mit dem aktuellen Windrichtung und -geschwindigkeit
 @app.callback(
-    Output("wind-arrow", "figure"),
+    Output("wind-gauge", "value"),
     Input("live-update", "n_intervals")
 )
-def update_wind_arrow(_):
+def update_wind_gauge(_):
     df = daten_von_api_holen()
     if df is None or df.empty:
-        return go.Figure().add_annotation(text="Keine Daten", x=0.5, y=0.5, showarrow=False)
+        return 0, "Keine Daten"
 
     speed_df = df[df["einheit"] == "kmh"]
-    dir_df = df[df["einheit"] == "°"]
 
-    if speed_df.empty or dir_df.empty:
-        return go.Figure().add_annotation(text="Keine Winddaten", x=0.5, y=0.5, showarrow=False)
+    if speed_df.empty:
+        return 0, "Keine Winddaten"
 
     speed = float(speed_df.sort_values("zeitstempel").iloc[-1]["messwert"])
-    direction = float(dir_df.sort_values("zeitstempel").iloc[-1]["messwert"])
 
-    return wind_arrow_rose_chart(direction, speed)  
+    return speed
+
 
 
 # Startet den Dash-Server
