@@ -420,7 +420,7 @@ app.layout = dbc.Container([
     dcc.Interval(id="countdown-timer", interval=1000, n_intervals=0),   # Countdown jede Sekunde
     dcc.Interval(id="live-update", interval=180 * 1000, n_intervals=0),  # Live-Daten alle 3 Minuten
 
-    html.H1("Dashboard", className="display-4 mb-4 text-center fw-bold"),
+    html.H1("Umweltmonitoring Dashboard", className="display-4 mb-4 text-center fw-bold"),
 
     dbc.Row([
         dbc.Col(
