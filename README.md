@@ -1,6 +1,5 @@
 ## 🌤️ Umweltmonitoring für Moste
 
-### 📷 Beispielansicht
 
 ![Dashboard Screenshot](./assets/dashboard.jpg)
 
@@ -9,50 +8,54 @@
 
 ## 📌 Projektüberblick
 
-Das Ziel dieses Projekts ist die Entwicklung eines webbasierten Dashboards zur Überwachung und Vorhersage von Umweltdaten, das mit einer frei gewählten **senseBox** verbunden ist.
+Das Ziel dieses Projekts ist die Entwicklung eines webbasierten Dashboards zur Überwachung und Vorhersage von Umweltdaten, das mit einem **senseBox** verbunden ist.
 
-Die Anwendung stellt aktuelle Sensordaten sowie Prognosen für Temperatur und Niederschlag visuell dar und speichert darüber hinaus eine umfangreiche Historie zur Analyse vergangener Messwerte.
+Die Anwendung stellt aktuelle Sensordaten sowie Prognosen für Temperatur und Niederschlag visuell dar.
 
----
+
 
 ### 🧱 Systemarchitektur
 
 Das Dashboard basiert auf drei Hauptkomponenten:
 
 - **Datenquelle:**  
-  Integration einer senseBox über die offizielle **senseBox API** zur Erfassung von Umweltdaten  
+  Integration einer senseBox über die **senseBox API** zur Erfassung von Umweltdaten  
   *(z. B. Temperatur, Luftfeuchtigkeit, Luftdruck, Feinstaub)*
 
 - **Datenhaltung:**  
-  Speicherung von bis zu **10.000 Zeitreihendatenpunkten** in einer **PostgreSQL-Datenbank mit TimescaleDB-Erweiterung**,  
+  Speicherung von  **10.000 Zeitreihendatenpunkten** in einer **PostgreSQL-Datenbank mit TimescaleDB-Erweiterung**,  
   um historische Analysen und maschinelles Lernen zu ermöglichen.
 
 - **Visualisierung:**  
   Darstellung der aktuellen Messwerte sowie historischer Entwicklungen in einem interaktiven Dashboard  
-  mit **Plotly**, eingebunden in eine **React**-Anwendung.
+  mit **Plotly Dash**.
 
----
 
-### 🧠 Maschinelles Lernen
 
-- Implementierung eines **Machine-Learning-Moduls mit Facebook Prophet**  
-- **Tägliche Erstellung einer 7-Tage-Vorhersage** für Temperatur und Niederschlagsmenge  
-- **Prognose basiert auf lokal gespeicherten Zeitreihendaten** (PostgreSQL/TimescaleDB)
+## 🧠 Besondere Merkmale
 
----
 
-### 🔁 Echtzeitfunktionen
+- Wetterdaten wie Temperatur, Luftfeuchtigkeit und Niederschlag werden **alle 3 Minuten automatisch** abgerufen und im Dashboard angezeigt. Am unteren Rand der Seite wird ein Countdown bis zum nächsten Update eingeblendet.
 
-- Automatische **Aktualisierung alle 3 Minuten**: Neue Sensordaten werden regelmäßig abgerufen und im Dashboard angezeigt  
-- Die **letzte Aktualisierungszeit** ist stets im Interface sichtbar  
-- **Wettervorhersage-Daten werden alle 24 Stunden** neu berechnet
+![countdown](./assets/countdown.jpg)
 
----
 
-### 🌤️ Zusätzliche Funktionen
+- Ein **Machine-Learning-Modul mit Facebook Prophet** wurde implementiert,  
+  um auf Basis historischer Wetterdaten **tägliche Durchschnittswerte für den Niederschlag sowie minimale und maximale Temperaturwerte** vorherzusagen.
 
-- **Dynamische Wetter-Icons** basierend auf der prognostizierten Niederschlagsmenge  
-- Anzeige von **PM2.5 / PM10 Feinstaubwerten** in µg/m³  
-- **Sonnenaufgang und Sonnenuntergang** für den aktuellen Tag  
-- **7-Tage-Wetterübersicht** mit Höchst- und Tiefstwerten
+![prophet](./assets/prophet.jpg)
+
+
+- Die historischen Wetterdaten (Temperatur und Niederschlag), die als Trainingsdaten für das Machine-Learning-Modell dienen, werden **alle 24 Stunden automatisch** neu abgerufen. Das Modell wird anschließend mit den aktualisierten Daten automatisch neu trainiert.
+
+![update](./assets/modelupdate.jpg)
+
+
+- Die Wetter-Icons im Dashboard **ändern sich** je nach vorhergesagter Niederschlagsmenge.
+
+![icons](./assets/icons.jpg)
+
+
+
+
 
