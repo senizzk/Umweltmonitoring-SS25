@@ -100,11 +100,41 @@ def temperatur_wochenkarte(forecast_min, forecast_max, forecast_rain):
 def temperatur_prognose_card():
     return dbc.Card(
         dbc.CardBody([
-            html.H5("7-Day Weather Forecast", className="card-title"),
+            html.H5("7-Day Weather Forecast", className="card-title text-center"),
             html.Div(id="forecast-graph")
         ]),
         class_name="glass-card w-100 h-100"
     )
+
+def verlauf_graph_card():
+    return dbc.Card(
+        dbc.CardBody([
+        html.H5("7-Day History", className="card-title text-center mb-3"),
+        html.Div(
+            dcc.Dropdown(
+                id="sensor-dropdown",
+                options=[
+                    {"label": "Temperature (°C)", "value": "67a661af4ef45d0008682745"},
+                    {"label": "Pressure (Pa)", "value": "67a661af4ef45d0008682746"},
+                    {"label": "Rain hourly (mm)", "value": "67a7ab164ef45d00089ef795"},
+                    {"label": "Humidity (%)", "value": "67a661af4ef45d0008682748"},
+                    {"label": "Wind speed (km/h)", "value": "67a661af4ef45d0008682749"},
+                    {"label": "PM 2.5 (µg/m³)", "value": "67a661af4ef45d000868274b"},
+                    {"label": "PM 10 (µg/m³)", "value": "67a661af4ef45d000868274c"}
+                ],
+                value="67a661af4ef45d0008682745",
+                clearable=False,
+            ),
+            style={
+                "maxWidth": "300px",       
+                "margin": "0 auto",         
+                "marginBottom": "20px"
+            }
+        ),
+        dcc.Graph(id="sensor-line-graph", config={"displayModeBar": False})
+    ]), class_name="glass-card w-100 h-100"
+        ),
+
 
 # Berechnet Sonnenaufgang und -untergang für Moste, Slowenien
 def calculate_sun_times(lat=46.196912, lon=14.548932):
@@ -439,6 +469,11 @@ app.layout = dbc.Container([
         dbc.Col(temperatur_prognose_card())
     ], class_name="mb-4"),
 
+    dbc.Row([
+    dbc.Col(verlauf_graph_card())
+    ], class_name="mb-5"),
+
+
     html.Div("Countdown", id="countdown", style={
         "position": "fixed",
         "bottom": "10px",
@@ -482,6 +517,40 @@ def update_forecast_ui(_):
     forecast_rain = create_forecast(df, 'rain_avg')
 
     return temperatur_wochenkarte(forecast_min, forecast_max, forecast_rain)
+
+# Aktualisiert die Verlaufsgrafik basierend auf der Sensor-Auswahl im Dropdown
+@app.callback(
+    Output("sensor-line-graph", "figure"),
+    Input("sensor-dropdown", "value")
+)
+def update_historical_chart(sensor_id):
+    df = verlauf_daten_von_api_holen(sensor_id)
+    if df is None or df.empty:
+        return go.Figure().add_annotation(text="Keine Daten", x=0.5, y=0.5, showarrow=False)
+
+    df["datum"] = df["zeitstempel"].dt.date
+    df_agg = df.groupby("datum")["messwert"].mean().reset_index()
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=df_agg["datum"],
+        y=df_agg["messwert"],
+        mode="lines+markers",
+        line=dict(color="black"),
+        marker=dict(size=6)
+    ))
+
+    fig.update_layout(
+        margin=dict(t=30, b=30, l=30, r=30),
+        height=300,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        xaxis_title="Datum",
+        yaxis_title="Messwert"
+    )
+    return fig
+
+
 
 
 # Holt aktuelle Temperaturdaten (alle 3 Minuten) und zeigt den letzten Wert an
