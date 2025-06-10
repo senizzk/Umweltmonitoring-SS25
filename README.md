@@ -55,6 +55,11 @@ Das Dashboard basiert auf drei Hauptkomponenten:
 
 ![icons](./assets/icons.jpg)
 
+- Ein interaktives Liniendiagramm zeigt den täglichen Verlauf verschiedener Wetterparameter der letzten 7 Tage, darunter Temperatur, Luftfeuchtigkeit, Niederschlag, Luftdruck, Windgeschwindigkeit und Feinstaubbelastung.
+Über ein Dropdown-Menü kann der gewünschte Sensor ausgewählt werden.
+
+<img src="./assets/verlauf.jpg" alt="verlauf" width="40%"/>
+
 
 
 

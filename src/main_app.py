@@ -105,7 +105,7 @@ def temperatur_prognose_card():
         ]),
         class_name="glass-card w-100 h-100"
     )
-
+# Verlaufsgrafik-Karte mit Dropdown zur Sensor-Auswahl
 def verlauf_graph_card():
     return dbc.Card(
         dbc.CardBody([
@@ -116,7 +116,7 @@ def verlauf_graph_card():
                 options=[
                     {"label": "Temperature (°C)", "value": "67a661af4ef45d0008682745"},
                     {"label": "Pressure (Pa)", "value": "67a661af4ef45d0008682746"},
-                    {"label": "Rain hourly (mm)", "value": "67a7ab164ef45d00089ef795"},
+                    {"label": "Rain (mm)", "value": "67a7ab164ef45d00089ef795"},
                     {"label": "Humidity (%)", "value": "67a661af4ef45d0008682748"},
                     {"label": "Wind speed (km/h)", "value": "67a661af4ef45d0008682749"},
                     {"label": "PM 2.5 (µg/m³)", "value": "67a661af4ef45d000868274b"},
@@ -420,29 +420,6 @@ def nested_cards():
 
 # ============================================
 
-# Erzeugt ein Druckmessgerät (Gauge) für die Anzeige des Luftdrucks
-def pressure_gauge_figure(pressure_value):
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=pressure_value,
-        number={"suffix": "Pa", "font": {"size": 32, "color": "black", "family": "sans-serif"}},
-        gauge={
-            'axis': {'range': [90000, 110000], 'tickwidth': 1, 'tickcolor': "gray"},
-            'bar': {'color': "black"},
-            'borderwidth': 0,
-            'bgcolor': "rgb(230, 230, 230)",
-        },
-        domain={'x': [0, 1], 'y': [0, 1]}
-    ))
-
-    fig.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",  
-        margin=dict(t=50, b=40, l=30, r=30),
-        height=220
-    )
-    return fig
-
-# ============================================
 
 # Gesamtlayout der Seite mit Intervallen für Live-Updates und Modelltraining
 app.layout = dbc.Container([
@@ -551,8 +528,6 @@ def update_historical_chart(sensor_id):
     return fig
 
 
-
-
 # Holt aktuelle Temperaturdaten (alle 3 Minuten) und zeigt den letzten Wert an
 @app.callback(
     Output("temperature-thermometer", "value"),
@@ -571,6 +546,27 @@ def update_temperature_thermometer(_):
     letzter_wert = float(temp_df.sort_values("zeitstempel").iloc[-1]["messwert"])
     return letzter_wert, f"{letzter_wert:.1f}°C"
 
+# Erzeugt ein Druckmessgerät (Gauge) für die Anzeige des Luftdrucks
+def pressure_gauge_figure(pressure_value):
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=pressure_value,
+        number={"suffix": "Pa", "font": {"size": 32, "color": "black", "family": "sans-serif"}},
+        gauge={
+            'axis': {'range': [90000, 110000], 'tickwidth': 1, 'tickcolor': "gray"},
+            'bar': {'color': "black"},
+            'borderwidth': 0,
+            'bgcolor': "rgb(230, 230, 230)",
+        },
+        domain={'x': [0, 1], 'y': [0, 1]}
+    ))
+
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",  
+        margin=dict(t=50, b=40, l=30, r=30),
+        height=220
+    )
+    return fig
 
 # Aktualisiert das Druckmessgerät (Gauge) mit den letzten Druckdaten
 @app.callback(
