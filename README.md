@@ -10,8 +10,7 @@
 
 Das Ziel dieses Projekts ist die Entwicklung eines webbasierten Dashboards zur Überwachung und Vorhersage von Umweltdaten, das mit einem **senseBox** verbunden ist.
 
-Die Anwendung stellt aktuelle Sensordaten sowie Prognosen für Temperatur und Niederschlag visuell dar.
-
+Die Anwendung stellt aktuelle Sensordaten, Prognosen für Temperatur und Niederschlag sowie den historischen Verlauf verschiedener Sensordaten der letzten 7 Tage visuell dar.
 
 
 ### 🧱 Systemarchitektur
