@@ -23,12 +23,13 @@ def create_forecast(df, value_column='min_val', days_ahead=7):
     model = Prophet(daily_seasonality=True)
     model.fit(df_prophet)
 
-    with open('model.pkl', 'wb') as f:
+    with open(f'model_{value_column}.pkl', 'wb') as f:
         pickle.dump(model, f)
 
 def return_forecast(df, value_column='min_val', days_ahead=7):
     
-    with open('model.pkl', 'rb') as f:
+
+    with open(f'model_{value_column}.pkl', 'rb') as f:
         model = pickle.load(f)
     future = model.make_future_dataframe(periods=days_ahead)
     forecast = model.predict(future)
