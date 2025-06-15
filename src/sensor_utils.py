@@ -188,17 +188,17 @@ def fetch_daily_weather_data(temp_sensor_id, rain_sensor_id, box_id=SENSEBOX_ID)
     return df
 
 # Funktion zum Erstellen einer Wetterprognose mit Prophet
-def create_forecast(df, value_column='min_val', days_ahead=7):
-    df_prophet = df[['datum', value_column]].rename(columns={'datum': 'ds', value_column: 'y'})
-    df_prophet.dropna(inplace=True)
+# def create_forecast(df, value_column='min_val', days_ahead=7):
+#     df_prophet = df[['datum', value_column]].rename(columns={'datum': 'ds', value_column: 'y'})
+#     df_prophet.dropna(inplace=True)
 
-    model = Prophet(daily_seasonality=True)
-    model.fit(df_prophet)
+#     model = Prophet(daily_seasonality=True)
+#     model.fit(df_prophet)
 
-    future = model.make_future_dataframe(periods=days_ahead)
-    forecast = model.predict(future)
+#     future = model.make_future_dataframe(periods=days_ahead)
+#     forecast = model.predict(future)
 
-    return forecast[['ds', 'yhat']].tail(days_ahead)
+#     return forecast[['ds', 'yhat']].tail(days_ahead)
 
 
 # Funktion zum Abrufen allgemeiner Box-Informationen

@@ -19,4 +19,4 @@ COPY . .
 EXPOSE 8050
 
 # Starte die Anwendung beim Hochfahren des Containers
-CMD ["python", "main_app.py"]
+CMD ["python", "app.py"]
