@@ -52,6 +52,8 @@ Das Dashboard basiert auf drei Hauptkomponenten:
 
 - Die Wetter-Icons im Dashboard **ändern sich** je nach vorhergesagter Niederschlagsmenge. 
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
 <!-- < 0.2 mm -->
 <i class="bi bi-sun" style="font-size: 2.5rem; color: #f7c948;"></i>
 
