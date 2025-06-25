@@ -52,23 +52,14 @@ Das Dashboard basiert auf drei Hauptkomponenten:
 
 - Die Wetter-Icons im Dashboard **ändern sich** je nach vorhergesagter Niederschlagsmenge. 
 
-< 0.2 mm >
-<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/sun.svg" width="40" />
-
-<!-- < 2 mm -->
-<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/cloud-sun.svg" width="40" />
-
-<!-- < 5 mm -->
-<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/cloud-drizzle.svg" width="40" />
-
-<!-- < 10 mm -->
-<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/cloud-rain.svg" width="40" />
-
-<!-- < 20 mm -->
-<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/cloud-rain-heavy.svg" width="40" />
-
-<!-- ≥ 20 mm -->
-<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/cloud-lightning-rain.svg" width="40" />
+| Niederschlag (mm) | Symbol | Farbe |
+|-------------------|--------|--------|
+| < 0.2 mm          | <img src="assets/sun.svg" width="40" />              | `#f7c948` |
+| < 2 mm            | <img src="assets/cloud-sun.svg" width="40" />        | `#f0ad4e` |
+| < 5 mm            | <img src="assets/cloud-drizzle.svg" width="40" />    | `#17a2b8` |
+| < 10 mm           | <img src="assets/cloud-rain.svg" width="40" />       | `#0d6efd` |
+| < 20 mm           | <img src="assets/cloud-rain-heavy.svg" width="40" /> | `#0d6efd` |
+| ≥ 20 mm           | <img src="assets/cloud-lightning-rain.svg" width="40" /> | `#280452` |
 
 
 
