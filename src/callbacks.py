@@ -220,3 +220,17 @@ def init_callbacks(app):
         speed = float(speed_df.sort_values("zeitstempel").iloc[-1]["messwert"])
 
         return speed
+    
+    @app.callback(
+    Output("last-updated-text", "children"),
+    Input("live-update", "n_intervals")
+)
+    def update_last_updated(n):
+        df = daten_von_api_holen()
+        temp_df = df[df["einheit"] == "°C"]
+        if temp_df.empty:
+            return "Keine Daten"
+        letzter_temp = temp_df.sort_values("zeitstempel").iloc[-1]
+        last_update = letzter_temp["zeitstempel"]
+        last_update = last_update.replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Europe/Berlin"))
+        return last_update.strftime('%d-%m-%Y %H:%M')

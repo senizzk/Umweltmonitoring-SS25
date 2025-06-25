@@ -104,24 +104,22 @@ def calculate_sun_times(lat=46.196912, lon=14.548932):
 def sensebox_info_card():
     box_info = box_info_holen()
     df = daten_von_api_holen()
-    temp_df = df[df["einheit"] == "°C"]
-    letzter_temp = temp_df.sort_values("zeitstempel").iloc[-1]
-    last_update = letzter_temp["zeitstempel"]
     sunrise, sunset = calculate_sun_times()
-    
-    name = box_info["name"]
-    created_at = box_info["created_at"].replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Europe/Berlin")).strftime('%d-%m-%Y %H:%M')
-    exposure = box_info["exposure"]
-    last_update = last_update.replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Europe/Berlin")).strftime('%d-%m-%Y %H:%M')
 
-    # Erzeugt die Mini-Karten für Sonnenaufgang und -untergang
+    name = box_info["name"]
+    created_at = box_info["created_at"].replace(
+        tzinfo=ZoneInfo("UTC")
+    ).astimezone(ZoneInfo("Europe/Berlin")).strftime('%d-%m-%Y %H:%M')
+    exposure = box_info["exposure"]
+
+    # Mini-Karten für Sonnenaufgang und -untergang
     mini_card_1 = dbc.Card(
         dbc.CardBody([
             html.Div(
-            html.I(className="bi bi-sunrise-fill", style={"fontSize": "3.6rem", "color": "#FF8C00"}),  
-            className="d-flex flex-column justify-content-center align-items-center"
-        ),
-        html.P(sunrise, className="card-text fw-bold text-center", style={"fontSize": "1.8rem"})
+                html.I(className="bi bi-sunrise-fill", style={"fontSize": "3.6rem", "color": "#FF8C00"}),
+                className="d-flex flex-column justify-content-center align-items-center"
+            ),
+            html.P(sunrise, className="card-text fw-bold text-center", style={"fontSize": "1.8rem"})
         ]),
         class_name="glass-card w-100 h-100"
     )
@@ -129,7 +127,7 @@ def sensebox_info_card():
     mini_card_2 = dbc.Card(
         dbc.CardBody([
             html.Div(
-                html.I(className="bi bi-sunset-fill", style={"fontSize": "3.6rem"}), 
+                html.I(className="bi bi-sunset-fill", style={"fontSize": "3.6rem"}),
                 className="d-flex flex-column justify-content-center align-items-center"
             ),
             html.P(sunset, className="card-text fw-bold text-center", style={"fontSize": "1.8rem"})
@@ -140,23 +138,24 @@ def sensebox_info_card():
     mini_cards_row = dbc.Row([
         dbc.Col(mini_card_1, width=6, class_name="h-100"),
         dbc.Col(mini_card_2, width=6, class_name="h-100")
-    ], class_name="mt-4 g-1 flex-grow-1 h-100")  
+    ], class_name="mt-4 g-1 flex-grow-1 h-100")
 
     return dbc.Card(
         dbc.CardBody([
             html.H5(name, className="card-title fw-bold", style={"fontSize": "4rem"}),
             html.Div([
-                html.P("Created on:", className="mb-0",style={"fontSize": "1.3rem"}),
+                html.P("Created on:", className="mb-0", style={"fontSize": "1.3rem"}),
                 html.P(created_at, className="mb-2"),
-                html.P("Location type:", className="mb-0",style={"fontSize": "1.3rem"}),
+                html.P("Location type:", className="mb-0", style={"fontSize": "1.3rem"}),
                 html.P(exposure, className="mb-2"),
-                html.P("Last updated:", className="mb-0",style={"fontSize": "1.3rem"}),
-                html.P(last_update, className="mb-0"),
+                html.P("Last updated:", className="mb-0", style={"fontSize": "1.3rem"}),
+                html.P(id="last-updated-text", className="mb-0"),  
             ], className="text-muted"),
-            mini_cards_row  
+            mini_cards_row
         ]),
         class_name="glass-card w-100 h-100"
     )
+
 
 
 # Platzhalter-Karte für leere Bereiche
