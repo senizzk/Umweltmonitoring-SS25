@@ -52,7 +52,7 @@ Das Dashboard basiert auf drei Hauptkomponenten:
 
 - Die Wetter-Icons im Dashboard **ändern sich** je nach vorhergesagter Niederschlagsmenge. 
 
-<!-- < 0.2 mm -->
+< 0.2 mm >
 <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/sun.svg" width="40" />
 
 <!-- < 2 mm -->
