@@ -1,6 +1,7 @@
 from dash import html
 import plotly.graph_objects as go
 
+# Gibt ein passendes Wetter-Icon basierend auf der Regenmenge zurück
 def get_rain_icon(rain_mm):
     if rain_mm < 0.2:
         return html.I(className="bi bi-sun", style={"fontSize": "1.8rem", "color": "#f7c948"})
@@ -15,24 +16,24 @@ def get_rain_icon(rain_mm):
     else:
         return html.I(className="bi bi-cloud-lightning-rain", style={"fontSize": "1.8rem", "color": "#280452"})
 
-
+# Erstellt ein Gauge-Diagramm für den Luftdruck
 def pressure_gauge_figure(pressure_value):
-        fig = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=pressure_value,
-            number={"suffix": "Pa", "font": {"size": 32, "color": "black", "family": "sans-serif"}},
-            gauge={
-                'axis': {'range': [90000, 110000], 'tickwidth': 1, 'tickcolor': "gray"},
-                'bar': {'color': "black"},
-                'borderwidth': 0,
-                'bgcolor': "rgb(230, 230, 230)",
-            },
-            domain={'x': [0, 1], 'y': [0, 1]}
-        ))
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=pressure_value,
+        number={"suffix": "Pa", "font": {"size": 32, "color": "black", "family": "sans-serif"}},
+        gauge={
+            'axis': {'range': [90000, 110000], 'tickwidth': 1, 'tickcolor': "gray"},
+            'bar': {'color': "black"},
+            'borderwidth': 0,
+            'bgcolor': "rgb(230, 230, 230)",
+        },
+        domain={'x': [0, 1], 'y': [0, 1]}
+    ))
 
-        fig.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",  
-            margin=dict(t=50, b=40, l=30, r=30),
-            height=220
-        )
-        return fig
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",  # transparenter Hintergrund
+        margin=dict(t=50, b=40, l=30, r=30),
+        height=220
+    )
+    return fig

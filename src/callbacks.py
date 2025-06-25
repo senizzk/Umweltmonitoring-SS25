@@ -1,4 +1,3 @@
-# Zeigt Countdown bis zur nächsten Live-Aktualisierung
 from dash import Input, Output
 import plotly.graph_objects as go
 from ml_utils import create_forecast, return_forecast
@@ -26,12 +25,12 @@ RAIN_SENSOR_ID = "67a7ab164ef45d00089ef795"  # Regen-Sensor-ID
 
 def init_callbacks(app):
     @app.callback(
-        Output("countdown", "children"),
-        Input("countdown-timer", "n_intervals"),
-        Input("daily-model-update", "n_intervals")
+        Output("countdown", "children"), # Zeigt Countdown bis zur nächsten Modell-Aktualisierung
+        Input("countdown-timer", "n_intervals"), # Aktualisiert den Countdown jede Sekunde
+        Input("daily-model-update", "n_intervals") #
     )
     def countdown_timer_render(n_intervals_count, _):
-        verbleibend = 180 - (n_intervals_count % 180)
+        verbleibend = 180 - (n_intervals_count % 180) # 180 Sekunden = 3 Minuten
         minuten = verbleibend // 60
         sekunden = verbleibend % 60
         return f"Nächste Aktualisierung in: {minuten:02}:{sekunden:02}"
@@ -41,7 +40,7 @@ def init_callbacks(app):
         Output("forecast-graph", "children"),
         Input("live-update", "n_intervals")
     )
-    def update_forecast_ui(_):
+    def update_forecast_ui(_): 
         df = fetch_daily_weather_data(TEMP_SENSOR_ID, RAIN_SENSOR_ID)
 
         forecast_min = return_forecast(df, 'min_val')
@@ -50,6 +49,7 @@ def init_callbacks(app):
 
         return temperatur_wochenkarte(forecast_min, forecast_max, forecast_rain)
 
+    # Lädt aktuelle Sensordaten & trainiert das Modell
     @app.callback(
         Output("train-dummy-output", "children"),
         Input("daily-model-update", "n_intervals")
@@ -121,7 +121,7 @@ def init_callbacks(app):
         return letzter_wert, f"{letzter_wert:.1f}°C"
     
 
-# Aktualisiert das Druckmessgerät (Gauge) mit den letzten Druckdaten
+    # Aktualisiert das Druckmessgerät (Gauge) mit den letzten Druckdaten
     @app.callback(
         Output("pressure-gauge", "figure"),
         Input("live-update", "n_intervals")
@@ -224,7 +224,7 @@ def init_callbacks(app):
     @app.callback(
     Output("last-updated-text", "children"),
     Input("live-update", "n_intervals")
-)
+    )
     def update_last_updated(n):
         df = daten_von_api_holen()
         temp_df = df[df["einheit"] == "°C"]

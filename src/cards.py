@@ -10,14 +10,15 @@ from sensor_utils import *
 from misc_utils import * 
 import dash_daq as daq
 
+# Erzeugt eine Reihe von Wetterkarten für die Wochenvorhersage
 def temperatur_wochenkarte(forecast_min, forecast_max, forecast_rain):
     cards = []
 
     for i in range(len(forecast_min)):
         day = pd.to_datetime(forecast_min['ds'].iloc[i]).strftime('%A')
-        min_temp = forecast_min['yhat'].iloc[i]
-        max_temp = forecast_max['yhat'].iloc[i]
-        rain = forecast_rain['yhat'].iloc[i]
+        min_temp = forecast_min['yhat'].iloc[i] # Minimum Temperatur
+        max_temp = forecast_max['yhat'].iloc[i] # Maximum Temperatur
+        rain = forecast_rain['yhat'].iloc[i] # Durchschnittlicher Regen
 
         rain_icon = get_rain_icon(rain)
 
@@ -44,7 +45,6 @@ def temperatur_wochenkarte(forecast_min, forecast_max, forecast_rain):
         }
     )
 
-
 # Leere Karte für die spätere Anzeige der Prognose-Grafik
 def temperatur_prognose_card():
     return dbc.Card(
@@ -54,11 +54,13 @@ def temperatur_prognose_card():
         ]),
         class_name="glass-card w-100 h-100"
     )
+
 # Verlaufsgrafik-Karte mit Dropdown zur Sensor-Auswahl
 def verlauf_graph_card():
     return dbc.Card(
         dbc.CardBody([
         html.H5("7-Day History", className="card-title text-center mb-3"),
+        # Dropdown zur Sensor-Auswahl
         html.Div(
             dcc.Dropdown(
                 id="sensor-dropdown",
@@ -81,8 +83,7 @@ def verlauf_graph_card():
             }
         ),
         dcc.Graph(id="sensor-line-graph", config={"displayModeBar": False})
-    ]), class_name="glass-card w-100 h-100"
-        ),
+    ]), class_name="glass-card w-100 h-100"),
 
 
 # Berechnet Sonnenaufgang und -untergang für Moste, Slowenien
@@ -92,8 +93,7 @@ def calculate_sun_times(lat=46.196912, lon=14.548932):
         region="Slovenia",
         timezone="Europe/Ljubljana",
         latitude=lat,
-        longitude=lon
-    )
+        longitude=lon)
     timezone = pytz.timezone(city.timezone)
     s = sun(city.observer, date=datetime.now(), tzinfo=timezone)
     sunrise = s["sunrise"].strftime("%H:%M")
@@ -155,8 +155,6 @@ def sensebox_info_card():
         ]),
         class_name="glass-card w-100 h-100"
     )
-
-
 
 # Platzhalter-Karte für leere Bereiche
 def placeholder_card(text="Platzhalter-Karte"):
