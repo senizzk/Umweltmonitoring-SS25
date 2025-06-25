@@ -50,7 +50,7 @@ Das Dashboard basiert auf drei Hauptkomponenten:
 ![update](./assets/modelupdate.jpg)
 
 
-- Die Wetter-Icons im Dashboard **ändern sich** je nach vorhergesagter Niederschlagsmenge.
+- Die Wetter-Icons im Dashboard **ändern sich** je nach vorhergesagter Niederschlagsmenge. 
 
 <!-- < 0.2 mm -->
 <i class="bi bi-sun" style="font-size: 2.5rem; color: #f7c948;"></i>
