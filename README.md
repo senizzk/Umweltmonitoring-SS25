@@ -52,7 +52,24 @@ Das Dashboard basiert auf drei Hauptkomponenten:
 
 - Die Wetter-Icons im Dashboard **ändern sich** je nach vorhergesagter Niederschlagsmenge.
 
-![icons](./assets/icons.jpg)
+<!-- < 0.2 mm -->
+<i class="bi bi-sun" style="font-size: 2.5rem; color: #f7c948;"></i>
+
+<!-- < 2 mm -->
+<i class="bi bi-cloud-sun" style="font-size: 2.5rem; color: #f0ad4e;"></i>
+
+<!-- < 5 mm -->
+<i class="bi bi-cloud-drizzle" style="font-size: 2.5rem; color: #17a2b8;"></i>
+
+<!-- < 10 mm -->
+<i class="bi bi-cloud-rain" style="font-size: 2.5rem; color: #0d6efd;"></i>
+
+<!-- < 20 mm -->
+<i class="bi bi-cloud-rain-heavy" style="font-size: 2.5rem; color: #0d6efd;"></i>
+
+<!-- ≥ 20 mm -->
+<i class="bi bi-cloud-lightning-rain" style="font-size: 2.5rem; color: #280452;"></i>
+
 
 - Ein interaktives Liniendiagramm zeigt den täglichen Verlauf verschiedener Wetterparameter der letzten 7 Tage, darunter Temperatur, Luftfeuchtigkeit, Niederschlag, Luftdruck, Windgeschwindigkeit und Feinstaubbelastung.
 Über ein Dropdown-Menü kann der gewünschte Sensor ausgewählt werden.

@@ -1,27 +1,15 @@
 # Zeigt Countdown bis zur nächsten Live-Aktualisierung
-import dash
-from dash import dcc, html, Input, Output
-import dash_bootstrap_components as dbc
-import pandas as pd
+from dash import Input, Output
 import plotly.graph_objects as go
-import plotly.express as px
-import math
 from ml_utils import create_forecast, return_forecast
 from sensor_utils import (
     daten_von_api_holen,
     daten_in_datenbank_schreiben,
     verlauf_daten_von_api_holen,
     verlauf_in_datenbank_schreiben,
-    box_info_holen,
     fetch_daily_weather_data) 
 import os
-from sqlalchemy import create_engine, text
-import dash_daq as daq
-from zoneinfo import ZoneInfo
-from astral import LocationInfo
-from astral.sun import sun
-from datetime import datetime
-import pytz
+from sqlalchemy import create_engine
 from cards import *
 from misc_utils import get_rain_icon, pressure_gauge_figure
 
@@ -214,7 +202,7 @@ def init_callbacks(app):
         latest = humidity_df.sort_values("zeitstempel").iloc[-1]["messwert"]
         return f"{latest:.0f} %"
 
-    # Aktualisiert die Windrose mit dem aktuellen Windrichtung und -geschwindigkeit
+    # Aktualisiert die Windgeschwindigkeit im Gauge
     @app.callback(
         Output("wind-gauge", "value"),
         Input("live-update", "n_intervals")

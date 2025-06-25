@@ -1,8 +1,4 @@
 import os
-import requests
-import pandas as pd
-from sqlalchemy import create_engine, text
-from datetime import datetime, timedelta, timezone
 from prophet import Prophet
 import pickle
 

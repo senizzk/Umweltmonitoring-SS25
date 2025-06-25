@@ -1,26 +1,8 @@
 import dash
-from dash import dcc, html, Input, Output
+from dash import dcc, html
 import dash_bootstrap_components as dbc
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
-import math
-from ml_utils import create_forecast, return_forecast
-from sensor_utils import (
-    daten_von_api_holen,
-    daten_in_datenbank_schreiben,
-    verlauf_daten_von_api_holen,
-    verlauf_in_datenbank_schreiben,
-    box_info_holen,
-    fetch_daily_weather_data) 
 import os
-from sqlalchemy import create_engine, text
-import dash_daq as daq
-from zoneinfo import ZoneInfo
-from astral import LocationInfo
-from astral.sun import sun
-from datetime import datetime   
-import pytz
+from sqlalchemy import create_engine
 from cards import *
 
 # Verbindung zur Datenbank herstellen
@@ -87,6 +69,8 @@ app.layout = dbc.Container([
 ], fluid=True, class_name="px-5 mt-4")
 
 from callbacks import init_callbacks
+
 init_callbacks(app)  # Initialisiere die Callbacks
+
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", port=8050, debug=True)
